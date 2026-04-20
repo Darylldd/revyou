@@ -43,19 +43,26 @@ export default function FlashcardMode({ flashcards, difficulty, onDone, isCombin
     }, 150);
   }
 
-  function markAnswer(isCorrect: boolean) {
-    const newResults = [...results];
-    const prev = newResults[currentIndex];
-    newResults[currentIndex] = isCorrect ? "correct" : "incorrect";
-    let nc = correct;
-    if (prev === "correct" && !isCorrect) nc--;
-    else if (prev !== "correct" && isCorrect) nc++;
-    else if (prev === null && isCorrect) nc++;
-    setResults(newResults);
-    setCorrect(nc);
-    if (isLast) { setTimeout(() => onDone(nc), 400); }
-    else { setTimeout(() => navigate("next"), 300); }
+function markAnswer(isCorrect: boolean) {
+  const newResults = [...results];
+  const prev = newResults[currentIndex];
+  newResults[currentIndex] = isCorrect ? "correct" : "incorrect";
+
+  let nc = correct;
+  if (prev === "correct" && !isCorrect) nc--;
+  else if (prev !== "correct" && isCorrect) nc++;
+  else if (prev === null && isCorrect) nc++;
+
+  setResults(newResults);
+  setCorrect(nc);
+
+  // Only auto-advance — never auto-finish
+  // User must click the finish button manually after all are answered
+  if (!isLast) {
+    setTimeout(() => navigate("next"), 300);
   }
+  // If it's the last card, just flip back and let user see the finish button
+}
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--bg)" }}>
@@ -187,21 +194,45 @@ export default function FlashcardMode({ flashcards, difficulty, onDone, isCombin
           </button>
         </div>
 
-        {/* Remaining hint */}
-        {answered < flashcards.length && (
-          <p className="text-xs mt-4 font-serif italic" style={{ color: "var(--text-faint)" }}>
-            {flashcards.length - answered} card{flashcards.length - answered !== 1 ? "s" : ""} remaining — mark each before finishing
-          </p>
-        )}
+     {/* Remaining hint — shown as long as any card is unanswered */}
+{answered < flashcards.length && (
+  <p className="text-xs mt-4 font-serif italic" style={{ color: "var(--text-faint)" }}>
+    {flashcards.length - answered} card{flashcards.length - answered !== 1 ? "s" : ""} remaining
+    — flip each card and mark it before finishing
+  </p>
+)}
 
-        {answered === flashcards.length && (
-          <button onClick={() => onDone(correct)}
-            className="mt-6 flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
-            style={{ backgroundColor: "var(--amber)", color: "#080604", boxShadow: "0 4px 20px rgba(212,137,10,0.35)" }}>
-            <RotateCcw size={15} />
-            {isCombinedPhase ? "Next Phase →" : "See Results"}
-          </button>
-        )}
+{/* Unanswered warning — if user tries skipping to last */}
+{answered < flashcards.length && currentIndex === flashcards.length - 1 && isFlipped && (
+  <div
+    className="mt-4 rounded-xl border p-3 flex items-center gap-2"
+    style={{
+      backgroundColor: "rgba(212,137,10,0.04)",
+      borderColor: "rgba(212,137,10,0.2)",
+    }}
+  >
+    <span style={{ color: "var(--amber)", fontSize: 13 }}>⚠</span>
+    <p className="text-xs font-serif italic" style={{ color: "var(--amber)" }}>
+      Go back and mark all cards before finishing.
+    </p>
+  </div>
+)}
+
+{/* Finish — ONLY when every single card has been answered */}
+{answered === flashcards.length && (
+  <button
+    onClick={() => onDone(correct)}
+    className="mt-6 flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+    style={{
+      backgroundColor: "var(--amber)",
+      color: "#080604",
+      boxShadow: "0 4px 20px rgba(212,137,10,0.35)",
+    }}
+  >
+    <RotateCcw size={15} />
+    {isCombinedPhase ? "Next Phase →" : "See Results"}
+  </button>
+)}
       </div>
     </div>
   );

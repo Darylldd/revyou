@@ -3,6 +3,7 @@ import {
   generateFlashcards,
   generateMultipleChoice,
   generateCombined,
+  isTestBank,
 } from "@/lib/groq";
 import type { GenerateReviewerPayload } from "@/types";
 
@@ -18,50 +19,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Tell the client if this is a test bank so it can show a notice
+    const detectedTestBank = isTestBank(extractedText);
+
     if (mode === "flashcard") {
       const flashcards = await generateFlashcards(extractedText, difficulty, itemCount);
-      return NextResponse.json({ flashcards });
+      if (!flashcards.length)
+        return NextResponse.json({ error: "No flashcards generated. Try again." }, { status: 500 });
+      return NextResponse.json({ flashcards, detectedTestBank });
     }
 
     if (mode === "multiple-choice") {
       const questions = await generateMultipleChoice(extractedText, difficulty, itemCount);
-      return NextResponse.json({ questions });
+      if (!questions.length)
+        return NextResponse.json({ error: "No questions generated. Try again." }, { status: 500 });
+      return NextResponse.json({ questions, detectedTestBank });
     }
 
     if (mode === "combined") {
       const half = Math.ceil(itemCount / 2);
-      const result = await generateCombined(
-        extractedText,
-        difficulty,
-        half,
-        itemCount - half
-      );
-      return NextResponse.json(result);
+      const result = await generateCombined(extractedText, difficulty, half, itemCount - half);
+      return NextResponse.json({ ...result, detectedTestBank });
     }
 
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
 
   } catch (error) {
     console.error("Generation error:", error);
-
     if (error instanceof Error) {
-      if (error.message.includes("429") || error.message.includes("rate_limit")) {
-        return NextResponse.json(
-          { error: "Rate limit reached. Please wait 30 seconds and try again." },
-          { status: 429 }
-        );
-      }
-      if (error.message.includes("No valid JSON")) {
-        return NextResponse.json(
-          { error: "AI returned unexpected data. Please try again." },
-          { status: 500 }
-        );
-      }
+      if (error.message.includes("429") || error.message.includes("rate_limit"))
+        return NextResponse.json({ error: "Rate limit hit. Wait 30 seconds and try again." }, { status: 429 });
+      if (error.message.includes("No valid JSON") || error.message.includes("parse"))
+        return NextResponse.json({ error: "AI returned unexpected data. Please try again." }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    return NextResponse.json(
-      { error: "Failed to generate reviewer. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Generation failed. Please try again." }, { status: 500 });
   }
 }

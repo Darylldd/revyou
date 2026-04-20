@@ -36,60 +36,78 @@ export default function FileUpload({
     );
   };
 
-  const processFile = async (file: File, index: number) => {
-    // 1. Upload to Cloudinary
-    updateFile(index, { status: "uploading", progress: 10 });
+ const processFile = async (file: File, index: number) => {
+  updateFile(index, { status: "uploading", progress: 10 });
 
-    const formData = new FormData();
-    formData.append("file", file);
+  // 1. Upload to Cloudinary
+  const formData = new FormData();
+  formData.append("file", file);
 
-    const uploadRes = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
+  const uploadRes = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
 
-    if (!uploadRes.ok) {
-      const err = await uploadRes.json();
-      throw new Error(err.error ?? "Upload failed");
-    }
+  if (!uploadRes.ok) {
+    const err = await uploadRes.json();
+    throw new Error(err.error ?? "Upload failed");
+  }
 
-    const { url, publicId } = await uploadRes.json();
-    updateFile(index, { status: "extracting", progress: 50, cloudinaryUrl: url });
+  const { url, publicId } = await uploadRes.json();
+  updateFile(index, { status: "extracting", progress: 50, cloudinaryUrl: url });
 
-    // 2. Extract text
-    const ext = getFileExtension(file.name);
-    const extractRes = await fetch("/api/extract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, fileType: ext, fileName: file.name }),
-    });
+  // 2. Extract text
+  const ext = getFileExtension(file.name);
+  const extractRes = await fetch("/api/extract", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, fileType: ext, fileName: file.name }),
+  });
 
-    if (!extractRes.ok) {
-      throw new Error("Text extraction failed");
-    }
+  if (!extractRes.ok) {
+    const err = await extractRes.json();
+    throw new Error(err.error ?? "Text extraction failed");
+  }
 
-    const { extractedText } = await extractRes.json();
-    updateFile(index, { status: "done", progress: 100, extractedText });
+  const { extractedText } = await extractRes.json();
 
-    // 3. Save to Firestore if user is logged in and saveToAccount is true
-    let fileId = `guest_${Date.now()}`;
-    if (user && saveToAccount) {
+  if (!extractedText || extractedText.trim().length < 5) {
+    throw new Error("No text could be extracted from this file.");
+  }
+
+  updateFile(index, { status: "done", progress: 100, extractedText });
+
+  // 3. Save to Firestore only if user is logged in AND saveToAccount is true
+  let fileId = `guest_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+  if (user && saveToAccount) {
+    try {
+      const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+
       const docRef = await addDoc(collection(db, "reviewerFiles"), {
         userId: user.uid,
         fileName: file.name,
         fileType: ext,
         cloudinaryUrl: url,
-        cloudinaryPublicId: publicId,
-        extractedText,
+        cloudinaryPublicId: publicId ?? "",
+        extractedText: extractedText.trim(),
         status: "ready",
         createdAt: serverTimestamp(),
       });
-      fileId = docRef.id;
-    }
 
-    onSuccess?.(fileId, extractedText, file.name);
-    return fileId;
-  };
+      fileId = docRef.id;
+      console.log("Saved to library:", fileId);
+    } catch (firestoreErr) {
+      // Don't fail the whole upload if Firestore save fails
+      console.error("Firestore save failed:", firestoreErr);
+      toast.error("File processed but couldn't save to library. Check Firestore rules.");
+    }
+  }
+
+  onSuccess?.(fileId, extractedText.trim(), file.name);
+  return fileId;
+};
 
   const handleFiles = useCallback(
     async (acceptedFiles: File[]) => {
