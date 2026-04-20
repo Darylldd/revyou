@@ -7,14 +7,12 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Input from "@/components/ui/Input";
 import Spinner from "@/components/ui/Spinner";
-import Divider from "@/components/ui/Divider";
 import GoogleIcon from "@/components/ui/GoogleIcon";
 import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const { signInWithEmail, signInWithGoogle } = useAuth();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,17 +21,16 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   function validate() {
-    const newErrors: typeof errors = {};
-    if (!email.trim()) newErrors.email = "Email is required.";
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Enter a valid email.";
-    if (!password) newErrors.password = "Password is required.";
-    else if (password.length < 6) newErrors.password = "Password must be at least 6 characters.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e: typeof errors = {};
+    if (!email.trim()) e.email = "Email is required.";
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email.";
+    if (!password) e.password = "Password is required.";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   }
 
-  async function handleEmailLogin(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleLogin(ev: React.FormEvent) {
+    ev.preventDefault();
     if (!validate()) return;
     setLoading(true);
     try {
@@ -42,19 +39,15 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
-      if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password")
         toast.error("Invalid email or password.");
-      } else if (code === "auth/too-many-requests") {
+      else if (code === "auth/too-many-requests")
         toast.error("Too many attempts. Try again later.");
-      } else {
-        toast.error("Login failed. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
+      else toast.error("Login failed.");
+    } finally { setLoading(false); }
   }
 
-  async function handleGoogleLogin() {
+  async function handleGoogle() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
@@ -62,105 +55,98 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
-      if (code !== "auth/popup-closed-by-user") {
-        toast.error("Google sign-in failed. Try again.");
-      }
-    } finally {
-      setGoogleLoading(false);
-    }
+      if (code !== "auth/popup-closed-by-user") toast.error("Google sign-in failed.");
+    } finally { setGoogleLoading(false); }
   }
 
   return (
-    <div className="w-full max-w-md">
-      {/* Card */}
+    <div className="w-full max-w-md animate-fade-up">
       <div
         className="rounded-2xl p-8 border"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border-warm)" }}
       >
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-white mb-1">Welcome back</h1>
-          <p className="text-slate-400 text-sm">Sign in to your ReviewAI account</p>
+          <h1 className="font-serif font-bold text-3xl mb-1.5" style={{ color: "var(--text)" }}>
+            Welcome back
+          </h1>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            The library is open. Your notes are waiting.
+          </p>
         </div>
 
-        {/* Google Button */}
+        {/* Google */}
         <button
-          onClick={handleGoogleLogin}
+          onClick={handleGoogle}
           disabled={googleLoading || loading}
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border font-medium text-sm text-white transition-all duration-200 hover:bg-white/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
-          style={{ borderColor: "var(--border)", backgroundColor: "rgba(255,255,255,0.05)" }}
+          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border font-medium text-sm transition-all duration-200 hover:border-amber-500/50 active:scale-95 disabled:opacity-50 mb-6"
+          style={{
+            borderColor: "var(--border-warm)",
+            backgroundColor: "var(--surface2)",
+            color: "var(--text-warm)",
+          }}
         >
           {googleLoading ? <Spinner size={18} /> : <GoogleIcon size={18} />}
           Continue with Google
         </button>
 
-        <Divider />
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+          <span className="text-xs font-serif italic" style={{ color: "var(--text-faint)" }}>or</span>
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+        </div>
 
-        {/* Email Form */}
-        <form onSubmit={handleEmailLogin} className="mt-6 flex flex-col gap-4">
+        {/* Form */}
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <Input
             label="Email"
             type="email"
             placeholder="you@example.com"
             icon={Mail}
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-            }}
+            onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: undefined })); }}
             error={errors.email}
-            autoComplete="email"
           />
-
           <Input
             label="Password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
             icon={Lock}
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-            }}
+            onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: undefined })); }}
             error={errors.password}
-            autoComplete="current-password"
             rightElement={
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="text-slate-500 hover:text-slate-300 transition-colors"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              <button type="button" onClick={() => setShowPassword((v) => !v)} style={{ color: "var(--text-muted)" }}>
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             }
           />
-
           <button
             type="submit"
             disabled={loading || googleLoading}
-            className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50 mt-1"
+            style={{
+              backgroundColor: "var(--amber)",
+              color: "#080604",
+              boxShadow: "0 4px 20px rgba(212,137,10,0.3)",
+            }}
           >
-            {loading ? <Spinner size={18} /> : null}
+            {loading ? <Spinner size={16} /> : null}
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>
 
-      {/* Sign up link */}
-      <p className="text-center text-slate-400 text-sm mt-6">
-        Don&apos;t have an account?{" "}
-        <Link href="/signup" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
-          Sign up for free
+      <p className="text-center text-sm mt-5" style={{ color: "var(--text-muted)" }}>
+        No account?{" "}
+        <Link href="/signup" className="font-semibold transition-colors" style={{ color: "var(--amber)" }}>
+          Join the library →
         </Link>
       </p>
-
-      {/* Guest mode */}
-      <p className="text-center mt-3">
-        <Link
-          href="/review"
-          className="text-slate-500 hover:text-slate-400 text-sm transition-colors underline underline-offset-2"
-        >
-          Continue without an account →
+      <p className="text-center mt-2">
+        <Link href="/review" className="text-xs underline underline-offset-2 transition-colors" style={{ color: "var(--text-faint)" }}>
+          Continue without an account
         </Link>
       </p>
     </div>

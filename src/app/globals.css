@@ -1,37 +1,132 @@
 @import "tailwindcss";
 
+/* ─── Fonts ──────────────────────────────────────────── */
 :root {
-  --bg: #0f0f1a;
-  --surface: #1a1a2e;
-  --surface2: #16213e;
-  --border: #2a2a4a;
-  --accent: #7c3aed;
-  --accent-light: #a855f7;
-  --text: #e2e8f0;
-  --text-muted: #94a3b8;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, serif;
+
+  /* ─── Palette: Midnight Library ─────────────────────── */
+  --bg:           #080604;
+  --bg-warm:      #0d0a06;
+  --surface:      #110e09;
+  --surface2:     #1a1510;
+  --surface3:     #221c14;
+  --border:       #2d2318;
+  --border-warm:  #3d3020;
+
+  /* Lamp Glow — amber gold */
+  --amber:        #d4890a;
+  --amber-light:  #f5a623;
+  --amber-dim:    #8a5a08;
+  --amber-glow:   rgba(212, 137, 10, 0.12);
+  --amber-glow2:  rgba(212, 137, 10, 0.06);
+
+  /* Library Burgundy */
+  --burgundy:     #7c1d1d;
+  --burgundy2:    #9e2424;
+  --burgundy-dim: rgba(124, 29, 29, 0.2);
+
+  /* 5-min Panic Red */
+  --panic:        #dc2626;
+  --panic-dim:    rgba(220, 38, 38, 0.15);
+
+  /* Text — warm parchment */
+  --text:         #f0e6d3;
+  --text-warm:    #e8d9c0;
+  --text-muted:   #7a6a58;
+  --text-faint:   #4a3e30;
+
+  /* Semantic */
+  --success:      #4ade80;
+  --success-dim:  rgba(74, 222, 128, 0.1);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  /* Subtle paper grain via repeating gradient */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,137,10,0.07) 0%, transparent 60%);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* ─── Typography ──────────────────────────────────────── */
+.font-serif  { font-family: var(--font-serif); }
+.font-sans   { font-family: var(--font-sans); }
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  color: var(--text);
 }
-::-webkit-scrollbar-track {
-  background: #0f0f1a;
+
+/* ─── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-warm); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--amber-dim); }
+
+/* ─── Glow pulse — for panic elements ────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(220,38,38,0.4); }
+  50%       { box-shadow: 0 0 20px rgba(220,38,38,0.7); }
 }
-::-webkit-scrollbar-thumb {
-  background: #2a2a4a;
-  border-radius: 3px;
+
+@keyframes amber-flicker {
+  0%, 100% { opacity: 1; }
+  92%       { opacity: 1; }
+  93%       { opacity: 0.85; }
+  94%       { opacity: 1; }
+  97%       { opacity: 0.9; }
+  98%       { opacity: 1; }
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #7c3aed;
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+.animate-fade-up    { animation: fadeUp 0.5s ease-out both; }
+.animate-flicker    { animation: amber-flicker 4s ease-in-out infinite; }
+.animate-float      { animation: float 3s ease-in-out infinite; }
+.animate-glow-panic { animation: glow-pulse 1.5s ease-in-out infinite; }
+
+/* ─── Lamp glow overlay ───────────────────────────────── */
+.lamp-glow {
+  position: relative;
+}
+.lamp-glow::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(212,137,10,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Book spine border ───────────────────────────────── */
+.book-spine {
+  border-left: 3px solid var(--burgundy2);
+  padding-left: 1rem;
+}
+
+/* ─── Panic border ────────────────────────────────────── */
+.panic-border {
+  border-color: var(--panic) !important;
+  animation: glow-pulse 1.5s ease-in-out infinite;
 }

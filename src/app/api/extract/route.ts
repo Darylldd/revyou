@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,133 +11,164 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No URL provided" }, { status: 400 });
     }
 
-    // Fetch the file as base64
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
     const ext = fileName?.split(".").pop()?.toLowerCase() ?? fileType;
 
     let extractedText = "";
 
-    // Handle images — use Claude Vision
-    if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
-      const mimeMap: Record<string, string> = {
-        png: "image/png",
-        jpg: "image/jpeg",
-        jpeg: "image/jpeg",
-        webp: "image/webp",
-        gif: "image/gif",
-      };
-      const mediaType = mimeMap[ext] ?? "image/jpeg";
-
-      const message = await anthropic.messages.create({
-        model: "claude-opus-4-5",
-        max_tokens: 4096,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: { type: "base64", media_type: mediaType as "image/jpeg", data: base64 },
-              },
-              {
-                type: "text",
-                text: `Extract ALL text content from this image. This is a reviewer/study material. 
-                Return only the raw text content as it appears, preserving the structure and meaning. 
-                Do not add any commentary or explanation. Just the extracted text.`,
-              },
-            ],
-          },
-        ],
-      });
-
-      extractedText = message.content
-        .filter((b) => b.type === "text")
-        .map((b) => (b as { type: "text"; text: string }).text)
-        .join("\n");
-    }
-
-    // Handle PDFs — use Claude with document support
-    else if (ext === "pdf") {
-      const message = await anthropic.messages.create({
-        model: "claude-opus-4-5",
-        max_tokens: 4096,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: {
-                  type: "base64",
-                  media_type: "application/pdf",
-                  data: base64,
-                },
-              } as unknown as { type: "text"; text: string },
-              {
-                type: "text",
-                text: `Extract ALL text content from this PDF. This is a reviewer/study material. 
-                Return only the raw text content, preserving the structure and topics. 
-                Do not add any commentary or explanation. Just the extracted text.`,
-              },
-            ],
-          },
-        ],
-      });
-
-      extractedText = message.content
-        .filter((b) => b.type === "text")
-        .map((b) => (b as { type: "text"; text: string }).text)
-        .join("\n");
-    }
-
-    // Handle text/doc files
-    else if (["txt", "md"].includes(ext)) {
+    // ── Plain text ────────────────────────────────────────────────
+    if (["txt", "md"].includes(ext)) {
       extractedText = Buffer.from(arrayBuffer).toString("utf-8");
     }
 
-    // Handle docx — basic extraction via text parsing
+    // ── PDF — pdfjs-dist, runs locally, free ─────────────────────
+    else if (ext === "pdf") {
+      extractedText = await extractPdfText(arrayBuffer);
+    }
+
+    // ── DOCX — mammoth, runs locally, free ───────────────────────
     else if (["doc", "docx"].includes(ext)) {
-      const message = await anthropic.messages.create({
-        model: "claude-opus-4-5",
-        max_tokens: 4096,
-        messages: [
-          {
-            role: "user",
-            content: `I have a Word document that I need to extract text from. 
-            The base64 content is: ${base64.slice(0, 100)}... (truncated)
-            
-            Since I cannot directly parse the docx, please respond with:
-            "DOCX_EXTRACTION_NEEDED"
-            
-            I will handle this client-side.`,
-          },
-        ],
-      });
+      const mammoth = await import("mammoth");
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      extractedText = result.value;
+    }
 
-      const resp = message.content
-        .filter((b) => b.type === "text")
-        .map((b) => (b as { type: "text"; text: string }).text)
-        .join("");
+    // ── Images — Groq Vision (smarter than OCR) ──────────────────
+    else if (["png", "jpg", "jpeg", "webp"].includes(ext)) {
+      extractedText = await extractImageWithGroqVision(arrayBuffer, ext);
+    }
 
-      if (resp.includes("DOCX_EXTRACTION_NEEDED")) {
-        return NextResponse.json({
-          extractedText: "",
-          needsClientExtraction: true,
-          fileType: "docx",
-        });
-      }
-    } else {
+    else {
       return NextResponse.json(
-        { error: `Unsupported file type: ${ext}` },
+        { error: `Unsupported file type: ${ext}. Use PDF, DOCX, TXT, PNG, or JPG.` },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ extractedText: extractedText.trim() });
+    const cleaned = extractedText.trim();
+
+    if (!cleaned || cleaned.length < 10) {
+      return NextResponse.json(
+        { error: "Could not extract readable text. Make sure your file has actual text content." },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ extractedText: cleaned });
+
   } catch (error) {
     console.error("Extraction error:", error);
-    return NextResponse.json({ error: "Text extraction failed" }, { status: 500 });
+
+    if (error instanceof Error) {
+      if (error.message.includes("429") || error.message.includes("rate_limit")) {
+        return NextResponse.json(
+          { error: "Rate limit hit. Please wait 30 seconds and try again." },
+          { status: 429 }
+        );
+      }
+      // Return the actual error message for easier debugging
+      return NextResponse.json(
+        { error: `Extraction failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Text extraction failed. Please try a different file." },
+      { status: 500 }
+    );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PDF via pdfjs-dist — 100% local, no API calls
+// ─────────────────────────────────────────────────────────────────
+async function extractPdfText(arrayBuffer: ArrayBuffer): Promise<string> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+  const pdf = await pdfjsLib.getDocument({
+    data: new Uint8Array(arrayBuffer),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    useSystemFonts: true,
+  }).promise;
+
+  const pages: string[] = [];
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text) pages.push(text);
+  }
+
+  if (pages.length === 0) {
+    throw new Error(
+      "This PDF appears to be scanned or image-based. Please upload a text-based PDF or use a JPG/PNG file instead."
+    );
+  }
+
+  return pages.join("\n\n");
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Image extraction via Groq Vision — free, smarter than OCR
+// Uses llama-3.2-11b-vision which understands context, not just text
+// ─────────────────────────────────────────────────────────────────
+async function extractImageWithGroqVision(
+  arrayBuffer: ArrayBuffer,
+  ext: string
+): Promise<string> {
+  const mimeMap: Record<string, string> = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+  };
+
+  const mimeType = mimeMap[ext] ?? "image/jpeg";
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+
+  const response = await groq.chat.completions.create({
+model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: dataUrl },
+          },
+          {
+            type: "text",
+            text: `You are a text extraction assistant. Extract ALL text content from this image.
+This is a study material / reviewer document.
+
+Instructions:
+- Extract every piece of text visible in the image
+- Preserve the structure: headings, bullet points, numbered lists, paragraphs
+- Keep all facts, definitions, formulas, and key terms exactly as written
+- If there are tables, preserve the data in a readable format
+- Do NOT summarize — extract the full raw text
+- Do NOT add commentary or explanation — just the extracted content`,
+          },
+        ],
+      },
+    ],
+    temperature: 0.1,
+    max_tokens: 4000,
+  });
+
+  const text = response.choices[0]?.message?.content ?? "";
+  if (!text || text.trim().length < 5) {
+    throw new Error("Could not extract text from image. Make sure the image contains readable text.");
+  }
+  return text;
 }

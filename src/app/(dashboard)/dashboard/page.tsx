@@ -64,7 +64,7 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            Welcome back, {user?.displayName?.split(" ")[0] ?? "there"} 👋
+            Welcome back, {user?.displayName?.split(" ")[0] ?? "there"} 
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             Manage your reviewers or start a new study session.
