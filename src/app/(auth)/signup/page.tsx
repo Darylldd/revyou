@@ -48,7 +48,7 @@ export default function SignupPage() {
         displayName: displayName.trim(), photoURL: null,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
       });
-      toast.success("Welcome to ReviewAI!");
+      toast.success("Welcome to RevYouw!");
       router.push("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;

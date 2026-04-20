@@ -76,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Flame size={13} style={{ color: "var(--amber)" }} />
             </div>
-            <span className="font-serif font-bold text-lg" style={{ color: "var(--text)" }}>ReviewAI</span>
+            <span className="font-serif font-bold text-lg" style={{ color: "var(--text)" }}>RevYouw</span>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden" style={{ color: "var(--text-muted)" }}>
             <X size={16} />

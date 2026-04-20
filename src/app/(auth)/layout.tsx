@@ -30,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             className="font-serif font-bold text-lg"
             style={{ color: "var(--text)" }}
           >
-            ReviewAI
+            RevYouw
           </span>
         </Link>
       </nav>
@@ -43,7 +43,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         className="relative z-10 text-center text-xs py-4 border-t font-serif italic"
         style={{ color: "var(--text-faint)", borderColor: "var(--border)" }}
       >
-        © {new Date().getFullYear()} ReviewAI
+        © {new Date().getFullYear()} RevYouw
       </footer>
     </div>
   );

@@ -17,9 +17,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "ReviewAI — Study Like Your Exam Is Tomorrow",
+  title: "RevYouw — Study Like Your Exam Is Tomorrow",
   description:
     "AI-powered reviewer for students. Upload files, generate flashcards and quizzes instantly.",
+     icons: {
+    icon: "/studying.png",
+    apple: "/studying.png",
+  },
 };
 
 export default function RootLayout({

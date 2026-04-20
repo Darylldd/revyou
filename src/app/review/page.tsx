@@ -147,7 +147,7 @@ function ReviewContent() {
         >
           <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
             <Sparkles className="text-violet-400 w-5 h-5" />
-            <span className="text-white font-bold text-lg">ReviewAI</span>
+            <span className="text-white font-bold text-lg">RevYouw</span>
           </Link>
           <div className="flex items-center gap-3">
             {!user && (

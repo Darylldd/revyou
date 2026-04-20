@@ -68,7 +68,7 @@ export default function HomePage() {
             className="font-serif font-bold text-xl tracking-wide"
             style={{ color: "var(--text)" }}
           >
-            ReviewAI
+            RevYouw
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -276,7 +276,7 @@ export default function HomePage() {
           fontStyle: "italic",
         }}
       >
-        © {new Date().getFullYear()} ReviewAI — Forged at midnight, tested at dawn.
+        © {new Date().getFullYear()} RevYouw — Forged at midnight, tested at dawn.
       </footer>
     </main>
   );
