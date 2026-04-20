@@ -209,7 +209,7 @@ export default function FileUpload({
           </>
         )}
         <p className="text-slate-500 text-xs">
-          Supports PDF, PNG, JPG, WEBP, TXT, DOCX • Max 10MB
+          Supports PDF, PPTX, DOCX, XLSX, PNG, JPG, HEIC, TXT • Max 10MB
         </p>
       </div>
 

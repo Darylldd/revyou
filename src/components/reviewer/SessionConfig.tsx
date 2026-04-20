@@ -421,7 +421,7 @@ export default function SessionConfig({
                 </p>
                 <p className="text-slate-400 text-sm mb-2">or click to browse</p>
                 <p className="text-slate-500 text-xs">
-                  PDF, PNG, JPG, WEBP, DOCX, TXT • Max 10MB
+                  PDF, PPTX, DOCX, XLSX, PNG, JPG, HEIC, TXT • Max 10MB
                 </p>
               </>
             )}

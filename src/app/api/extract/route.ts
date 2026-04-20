@@ -3,6 +3,8 @@ import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const { url, fileType, fileName } = await req.json();
@@ -19,23 +21,19 @@ export async function POST(req: NextRequest) {
       extractedText = buffer.toString("utf-8");
     } else if (ext === "pdf") {
       extractedText = await extractPdf(buffer);
-    } else if (["doc", "docx"].includes(ext)) {
-      extractedText = await extractDocx(buffer);
-    } else if (["png", "jpg", "jpeg", "webp"].includes(ext)) {
+    } else if (["docx", "doc", "pptx", "xlsx", "xlsm", "odt", "odp", "ods"].includes(ext)) {
+      extractedText = await extractOffice(buffer, ext);
+    } else if (["heic", "heif"].includes(ext)) {
+      extractedText = await extractHeic(buffer);
+    } else if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
       extractedText = await extractImage(buffer, ext);
     } else {
-      return NextResponse.json(
-        { error: `Unsupported file type: ${ext}. Use PDF, DOCX, TXT, PNG, or JPG.` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `Unsupported file type: .${ext}` }, { status: 400 });
     }
 
     const cleaned = extractedText.trim();
     if (!cleaned || cleaned.length < 5) {
-      return NextResponse.json(
-        { error: "Could not extract content from this file." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Could not extract content from this file." }, { status: 400 });
     }
 
     return NextResponse.json({ extractedText: cleaned });
@@ -50,61 +48,119 @@ export async function POST(req: NextRequest) {
 async function extractPdf(buffer: Buffer): Promise<string> {
   try {
     const { extractText } = await import("unpdf");
-
-    // unpdf needs a Uint8Array
     const uint8 = new Uint8Array(buffer);
     const { text } = await extractText(uint8, { mergePages: true });
-
     const cleaned = (text ?? "").trim();
-
     if (!cleaned || cleaned.length < 20) {
-      throw new Error(
-        "SCANNED_PDF: This PDF appears to be scanned or image-based. " +
-        "Please upload the pages as JPG/PNG instead, or use a text-based PDF."
-      );
+      throw new Error("This PDF appears to be scanned/image-based. Upload the pages as JPG/PNG instead, or use a text-based PDF.");
     }
-
     return cleaned;
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";
-    if (msg.startsWith("SCANNED_PDF:")) {
-      throw new Error(msg.replace("SCANNED_PDF: ", ""));
-    }
-    console.error("PDF extraction internal error:", err);
-    throw new Error(
-      "Failed to read PDF. Make sure it is a valid, non-password-protected, text-based PDF."
-    );
+    if (msg.includes("scanned") || msg.includes("image-based")) throw err;
+    throw new Error("Failed to read PDF. Make sure it is a valid, non-password-protected, text-based PDF.");
   }
 }
 
-// ── DOCX via mammoth ──────────────────────────────────────────────
-async function extractDocx(buffer: Buffer): Promise<string> {
+// ── Office files: DOCX, DOC, PPTX, XLSX, XLSM via officeparser ──
+async function extractOffice(buffer: Buffer, ext: string): Promise<string> {
+  // XLSX/XLSM — use SheetJS for richer output
+  if (["xlsx", "xlsm"].includes(ext)) {
+    return extractExcel(buffer);
+  }
+
+  // DOC — try mammoth first (better for .doc), fallback to officeparser
+  if (ext === "doc") {
+    try {
+      const mammoth = await import("mammoth");
+      const result = await mammoth.extractRawText({ buffer });
+      const text = result.value?.trim() ?? "";
+      if (text.length > 20) return text;
+    } catch { /* fallthrough */ }
+  }
+
+  // DOCX, PPTX, DOC (fallback), ODT, ODP, ODS — officeparser
   try {
-    const mammoth = await import("mammoth");
-    // mammoth accepts { buffer } directly
-    const result = await mammoth.extractRawText({ buffer });
-    const text = result.value?.trim() ?? "";
-    if (!text || text.length < 10) {
-      throw new Error("Word document appears to be empty or has no extractable text.");
+    const officeparser = await import("officeparser");
+    const parseOffice = (officeparser as any).parseOffice ?? (officeparser as any).parseOfficeAsync;
+    const text: string = await new Promise((resolve, reject) => {
+      const options = {
+        outputErrorToConsole: false,
+        newlineDelimiter: "\n",
+        ignoreNotes: false,
+      };
+      const callback = (err: any, data: string) => {
+        if (err) return reject(err);
+        resolve(data);
+      };
+      const result = parseOffice(buffer, options, callback);
+      if (result && typeof result.then === "function") {
+        result.then(resolve).catch(reject);
+      } else if (result !== undefined) {
+        resolve(result);
+      }
+    });
+    const cleaned = (text ?? "").trim();
+    if (!cleaned || cleaned.length < 5) {
+      throw new Error(`Could not extract text from this ${ext.toUpperCase()} file. Make sure it contains actual text content.`);
     }
-    return text;
+    return cleaned;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("Could not extract")) throw err;
+    throw new Error(`Failed to read .${ext} file. Make sure it is a valid, uncorrupted file.`);
+  }
+}
+
+// ── Excel/XLSM via SheetJS ────────────────────────────────────────
+async function extractExcel(buffer: Buffer): Promise<string> {
+  try {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const lines: string[] = [];
+
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName];
+      const csv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
+      const trimmed = csv.trim();
+      if (trimmed) {
+        lines.push(`=== Sheet: ${sheetName} ===`);
+        lines.push(trimmed);
+      }
+    }
+
+    const result = lines.join("\n\n").trim();
+    if (!result || result.length < 5) {
+      throw new Error("Spreadsheet appears to be empty or has no readable content.");
+    }
+    return result;
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";
     if (msg.includes("empty")) throw err;
-    throw new Error("Failed to read Word document. Make sure it is a valid .docx file.");
+    throw new Error("Failed to read spreadsheet. Make sure it is a valid .xlsx or .xlsm file.");
   }
 }
 
-// ── Image via Groq Vision ─────────────────────────────────────────
-// Works for BOTH text-heavy images AND diagrams/photos with no text
+// ── HEIC/HEIF via sharp → JPEG → Groq Vision ─────────────────────
+async function extractHeic(buffer: Buffer): Promise<string> {
+  try {
+    const sharp = await import("sharp");
+    // Convert HEIC/HEIF to JPEG
+    const jpegBuffer = await sharp.default(buffer).jpeg({ quality: 90 }).toBuffer();
+    return extractImage(jpegBuffer, "jpg");
+  } catch (err) {
+    // If sharp fails (HEIC support varies), send raw to Groq Vision as fallback
+    console.error("Sharp HEIC conversion failed, trying direct:", err);
+    return extractImage(buffer, "jpg");
+  }
+}
+
+// ── Images via Groq Vision ────────────────────────────────────────
 async function extractImage(buffer: Buffer, ext: string): Promise<string> {
   const mimeMap: Record<string, string> = {
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    webp: "image/webp",
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
+    webp: "image/webp", gif: "image/gif",
   };
-
   const mimeType = mimeMap[ext] ?? "image/jpeg";
   const base64 = buffer.toString("base64");
   const dataUrl = `data:${mimeType};base64,${base64}`;
@@ -118,59 +174,52 @@ async function extractImage(buffer: Buffer, ext: string): Promise<string> {
           { type: "image_url", image_url: { url: dataUrl } },
           {
             type: "text",
-            text: `You are a study material analyzer for a reviewer/flashcard application.
+            text: `You are a study material analyzer for a flashcard/quiz application.
 
-Your job is to extract ALL useful study content from this image — whether it has text or not.
+Extract ALL useful educational content from this image.
 
-STEP 1 — DETECT what type of image this is:
-- Text-heavy (notes, textbook page, test questions, slides) → extract all text verbatim
-- Diagram/chart/figure (labeled diagram, flowchart, graph, map) → describe all labels, relationships, and data
-- Photo/illustration with educational value (anatomy, geography, science concept) → describe what is shown and its educational significance in detail
-- Mixed (diagram with captions) → do both
+STEP 1 — identify the image type:
+- Text document (notes, textbook page, slides, test questions) → extract all text verbatim
+- Diagram/chart/figure (flowchart, graph, labeled diagram, table) → describe all labels and data
+- Photo/illustration with educational value (anatomy, science, geography) → describe in detail
+- Handwritten notes → transcribe as accurately as possible
 
-STEP 2 — EXTRACT or DESCRIBE based on type:
+STEP 2 — extract based on type:
 
-For TEXT content:
-- Extract every word exactly as written
-- Preserve structure: headings, bullet points, numbered lists
-- For MCQ questions: preserve format with choices labeled A/B/C/D
-- For tables: extract as rows with clear separators
+For TEXT:
+- Copy every word exactly
+- Preserve numbered lists, bullets, headings
+- For MCQ: keep format "1. Question\nA. Choice\nB. Choice\nC. Choice\nD. Choice"
+- For tables: row by row with | separators
 
 For DIAGRAMS/CHARTS:
-- Name the diagram/chart type and its title if visible
-- List all labeled parts and what they represent
-- Describe relationships, flows, or hierarchies
-- Include any numerical values, percentages, or measurements
-- For timelines: list all events in order
-- For graphs: describe axes, trends, and key data points
+- State diagram type and title
+- List all labeled parts and what they mean
+- Describe flows, hierarchies, relationships
+- Include all numbers, percentages, units
 
 For PHOTOS/ILLUSTRATIONS:
-- Identify the subject (what/who is shown)
-- Describe key features relevant to studying (e.g. parts of the cell, bones in the body)
-- Include any visible labels or annotations
-- Explain the educational context or concept illustrated
+- Identify subject clearly
+- Describe all labeled parts
+- Explain the educational concept shown
+- Include any annotations
 
-IMPORTANT:
-- NEVER say the image has no text if it has visual educational content — describe it instead
-- NEVER output "NO_TEXT_FOUND" unless the image is completely blank/unrelated to any subject
-- Your output will be used to generate study flashcards and quiz questions
-- Be thorough — the more detail you extract, the better the flashcards will be
-- Do not add preamble like "Here is the extracted content:" — just output the content directly`,
+RULES:
+- Be thorough — more detail = better flashcards
+- Never output "NO_TEXT_FOUND" unless image is completely blank or unrelated to any subject
+- If image has no text but has educational content, describe it in detail
+- No preamble like "Here is the content:" — just output directly`,
           },
         ],
       },
     ],
-    temperature: 0.1,
+    temperature: 0.05,
     max_tokens: 4000,
   });
 
   const text = response.choices[0]?.message?.content ?? "";
-
-  if (!text || text.trim().length < 10 || text.trim() === "NO_TEXT_FOUND") {
-    throw new Error(
-      "This image appears to be blank or unrelated to any study material. Please upload an image with educational content."
-    );
+  if (!text || text.trim().length < 10) {
+    throw new Error("Image appears blank or contains no educational content.");
   }
-
   return text.trim();
 }
