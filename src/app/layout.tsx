@@ -1,60 +1,44 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from "react-hot-toast";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "600", "700", "900"],
-  style: ["normal", "italic"],
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "RevYouw — Study Like Your Exam Is Tomorrow",
-  description:
-    "AI-powered reviewer for students. Upload files, generate flashcards and quizzes instantly.",
-     icons: {
-    icon: "/studying.png",
-    apple: "/studying.png",
-  },
+  title: "ReviewAI — Study smarter",
+  description: "Upload your notes. Generate flashcards and quizzes. Pass that exam.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="en" className={inter.variable} data-theme="paper">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet" />
+      </head>
       <body>
-        <AuthProvider>
-          {children}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: "#1a1510",
-                color: "#f0e6d3",
-                border: "1px solid #2d2318",
-                fontFamily: "var(--font-inter)",
-                fontSize: "13px",
-              },
-              success: {
-                iconTheme: { primary: "#d4890a", secondary: "#1a1510" },
-              },
-              error: {
-                iconTheme: { primary: "#dc2626", secondary: "#1a1510" },
-              },
-            }}
-          />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: "var(--card)",
+                  color: "var(--ink)",
+                  border: "1px solid var(--border)",
+                  fontSize: "13px",
+                  borderRadius: "4px",
+                  boxShadow: "2px 3px 0 var(--border-2)",
+                },
+              }}
+            />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

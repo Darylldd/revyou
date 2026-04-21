@@ -9,37 +9,47 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon: Icon, rightElement, className = "", ...props }, ref) => {
-    return (
-      <div className="w-full flex flex-col gap-1.5">
-        {label && (
-          <label className="text-sm font-medium text-slate-300">{label}</label>
+  ({ label, error, icon: Icon, rightElement, style, ...props }, ref) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      {label && (
+        <label className="hand" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-2)" }}>
+          {label}
+        </label>
+      )}
+      <div style={{ position: "relative" }}>
+        {Icon && (
+          <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }}>
+            <Icon size={14} />
+          </div>
         )}
-        <div className="relative">
-          {Icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-              <Icon size={16} />
-            </div>
-          )}
-          <input
-            ref={ref}
-            className={`w-full border rounded-xl px-4 py-2.5 text-white placeholder:text-slate-500 
-              focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 
-              transition-all text-sm ${Icon ? "pl-9" : ""} ${rightElement ? "pr-10" : ""} 
-              ${error ? "border-red-500/70 focus:border-red-500 focus:ring-red-500" : "border-white/10"} 
-              ${className}`}
-            style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-            {...props}
-          />
-          {rightElement && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">{rightElement}</div>
-          )}
-        </div>
-        {error && <p className="text-red-400 text-xs">{error}</p>}
+        <input
+          ref={ref}
+          style={{
+            width: "100%",
+            background: "var(--card)",
+            border: `1.5px solid ${error ? "var(--red)" : "var(--border)"}`,
+            borderRadius: 4,
+            padding: `9px ${rightElement ? "36px" : "12px"} 9px ${Icon ? "32px" : "12px"}`,
+            fontSize: 13,
+            color: "var(--ink)",
+            fontFamily: "var(--font-sans)",
+            outline: "none",
+            transition: "border-color .15s",
+            ...style,
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = error ? "var(--red)" : "var(--blue)"; props.onFocus?.(e); }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = error ? "var(--red)" : "var(--border)"; props.onBlur?.(e); }}
+          {...props}
+        />
+        {rightElement && (
+          <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}>
+            {rightElement}
+          </div>
+        )}
       </div>
-    );
-  }
+      {error && <p style={{  color: "var(--red)", fontFamily: "var(--font-hand)", fontSize: "13px" }}>{error}</p>}
+    </div>
+  )
 );
-
 Input.displayName = "Input";
 export default Input;

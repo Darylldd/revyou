@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle, XCircle, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw, CheckCircle, XCircle } from "lucide-react";
 import type { Flashcard, DifficultyLevel } from "@/types";
 
-interface FlashcardModeProps {
+interface Props {
   flashcards: Flashcard[];
   difficulty: DifficultyLevel;
   onDone: (correct: number) => void;
@@ -12,227 +12,186 @@ interface FlashcardModeProps {
   phaseLabel?: string;
 }
 
-const difficultyStyle: Record<DifficultyLevel, { color: string; bg: string }> = {
-  easy:   { color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
-  medium: { color: "#d4890a", bg: "rgba(212,137,10,0.1)" },
-  hard:   { color: "#dc2626", bg: "rgba(220,38,38,0.1)" },
+const diffColor: Record<DifficultyLevel, string> = {
+  easy: "#16a34a", medium: "#d97706", hard: "#dc2626",
 };
 
-export default function FlashcardMode({ flashcards, difficulty, onDone, isCombinedPhase, phaseLabel }: FlashcardModeProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
+export default function FlashcardMode({ flashcards, difficulty, onDone, isCombinedPhase, phaseLabel }: Props) {
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
   const [correct, setCorrect] = useState(0);
   const [results, setResults] = useState<("correct" | "incorrect" | null)[]>(() => new Array(flashcards.length).fill(null));
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [anim, setAnim] = useState(false);
 
-  const card = flashcards[currentIndex];
-  const progress = (currentIndex / flashcards.length) * 100;
-  const answered = results.filter((r) => r !== null).length;
-  const isLast = currentIndex === flashcards.length - 1;
-  const ds = difficultyStyle[difficulty];
+  const card = flashcards[idx];
+  const answered = results.filter(Boolean).length;
+  const isLast = idx === flashcards.length - 1;
+  const progress = Math.round((answered / flashcards.length) * 100);
 
-  function flip() { if (!isAnimating) setIsFlipped((v) => !v); }
-
-  function navigate(dir: "prev" | "next") {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((i) => dir === "next" ? Math.min(i + 1, flashcards.length - 1) : Math.max(i - 1, 0));
-      setIsAnimating(false);
-    }, 150);
+  function go(dir: "prev" | "next") {
+    if (anim) return;
+    setAnim(true); setFlipped(false);
+    setTimeout(() => { setIdx((i) => dir === "next" ? Math.min(i + 1, flashcards.length - 1) : Math.max(i - 1, 0)); setAnim(false); }, 140);
   }
 
-function markAnswer(isCorrect: boolean) {
-  const newResults = [...results];
-  const prev = newResults[currentIndex];
-  newResults[currentIndex] = isCorrect ? "correct" : "incorrect";
-
-  let nc = correct;
-  if (prev === "correct" && !isCorrect) nc--;
-  else if (prev !== "correct" && isCorrect) nc++;
-  else if (prev === null && isCorrect) nc++;
-
-  setResults(newResults);
-  setCorrect(nc);
-
-  // Only auto-advance — never auto-finish
-  // User must click the finish button manually after all are answered
-  if (!isLast) {
-    setTimeout(() => navigate("next"), 300);
+  function mark(isCorrect: boolean) {
+    const nr = [...results];
+    const prev = nr[idx];
+    nr[idx] = isCorrect ? "correct" : "incorrect";
+    let nc = correct;
+    if (prev === "correct" && !isCorrect) nc--;
+    else if (prev !== "correct" && isCorrect) nc++;
+    else if (prev === null && isCorrect) nc++;
+    setResults(nr); setCorrect(nc);
+    if (!isLast) setTimeout(() => go("next"), 280);
   }
-  // If it's the last card, just flip back and let user see the finish button
-}
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--bg)" }}>
-      {/* Top bar */}
-      <div className="px-6 py-4 border-b flex items-center gap-4" style={{ borderColor: "var(--border)" }}>
-        {isCombinedPhase && (
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full font-serif italic"
-            style={{ backgroundColor: "rgba(212,137,10,0.15)", color: "var(--amber)" }}>
-            {phaseLabel}
-          </span>
-        )}
-        <div className="flex-1 flex items-center gap-3">
-          <span className="text-sm font-serif" style={{ color: "var(--text-muted)" }}>
-            {currentIndex + 1} / {flashcards.length}
-          </span>
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border)" }}>
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%`, backgroundColor: "var(--amber)" }} />
-          </div>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
-            style={{ backgroundColor: ds.bg, color: ds.color }}>
-            {difficulty}
-          </span>
+    <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+
+      {/* Progress bar — looks like pencil underlining */}
+      <div style={{ background: "var(--card)", borderBottom: "1.5px solid var(--border)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+        {isCombinedPhase && <span className="hand" style={{ fontSize: 13, color: "var(--blue)", whiteSpace: "nowrap" }}>{phaseLabel}</span>}
+        <span style={{ fontSize: 12, color: "var(--ink-4)", whiteSpace: "nowrap" }}>{idx + 1} / {flashcards.length}</span>
+        <div style={{ flex: 1, height: 4, background: "var(--border-2)", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${progress}%`, background: diffColor[difficulty], borderRadius: 2, transition: "width .4s" }} />
         </div>
-        <div className="flex items-center gap-3 text-sm font-semibold">
-          <span style={{ color: "#4ade80" }}>✓ {correct}</span>
-          <span style={{ color: "#f87171" }}>✗ {answered - correct}</span>
+        <div style={{ display: "flex", gap: 10, fontSize: 13, fontWeight: 600 }}>
+          <span style={{ color: "#16a34a" }}>✓ {correct}</span>
+          <span style={{ color: "#dc2626" }}>✗ {answered - correct}</span>
         </div>
       </div>
 
       {/* Card area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-        {/* Lamp glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(212,137,10,0.06) 0%, transparent 70%)" }} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
 
-        {results[currentIndex] && (
-          <div className={`flex items-center gap-2 text-sm font-medium mb-4 px-3 py-1.5 rounded-full font-serif italic`}
-            style={{
-              color: results[currentIndex] === "correct" ? "#4ade80" : "#f87171",
-              backgroundColor: results[currentIndex] === "correct" ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)",
-            }}>
-            {results[currentIndex] === "correct" ? <CheckCircle size={14} /> : <XCircle size={14} />}
-            {results[currentIndex] === "correct" ? "Noted!" : "Keep studying"}
+        {results[idx] && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600,
+            marginBottom: 12, padding: "5px 12px", borderRadius: 20,
+            background: results[idx] === "correct" ? "var(--green-light)" : "var(--red-light)",
+            color: results[idx] === "correct" ? "#16a34a" : "#dc2626",
+          }}>
+            {results[idx] === "correct" ? <CheckCircle size={14} /> : <XCircle size={14} />}
+            <span className="hand">{results[idx] === "correct" ? "got it!" : "keep studying"}</span>
           </div>
         )}
 
-        {/* Flashcard */}
-        <div className="w-full max-w-xl cursor-pointer select-none relative z-10"
-          style={{ perspective: "1200px" }} onClick={flip}>
-          <div className="relative w-full transition-all duration-500"
-            style={{ transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0)", minHeight: "280px" }}>
+        {/* The actual flashcard — ruled index card */}
+        <div style={{ width: "100%", maxWidth: 520, cursor: "pointer", perspective: 1000 }} onClick={() => !anim && setFlipped((v) => !v)}>
+          <div style={{
+            position: "relative", width: "100%", minHeight: 260,
+            transition: "transform 0.5s",
+            transformStyle: "preserve-3d",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}>
             {/* Front */}
-            <div className="absolute inset-0 rounded-2xl p-8 flex flex-col items-center justify-center text-center"
-              style={{
-                backgroundColor: "var(--surface)",
-                border: isFlipped ? "1px solid var(--border)" : "1px solid rgba(212,137,10,0.35)",
-                boxShadow: isFlipped ? "none" : "0 0 40px rgba(212,137,10,0.08), inset 0 1px 0 rgba(212,137,10,0.1)",
-                backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-              }}>
-              <BookOpen size={16} className="mb-4" style={{ color: "var(--text-faint)" }} />
-              <p className="text-xs uppercase tracking-widest mb-4 font-sans font-semibold" style={{ color: "var(--text-faint)" }}>
-                Question
-              </p>
-              <p className="font-serif text-xl font-semibold leading-relaxed" style={{ color: "var(--text)" }}>
-                {card.question}
-              </p>
-              <p className="text-xs mt-6 font-serif italic" style={{ color: "var(--text-faint)" }}>
-                Click to reveal answer
-              </p>
+            <div className="ruled" style={{
+              position: "absolute", inset: 0,
+              border: `1px solid ${flipped ? "var(--border)" : diffColor[difficulty]}`,
+              borderRadius: 3, padding: "32px 28px",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center",
+              backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+              boxShadow: flipped ? "none" : "3px 4px 0 var(--border-2)",
+              background: "var(--card)",
+            }}>
+              <div style={{ borderLeft: "2px solid var(--rule-red)", paddingLeft: 16, width: "100%" }}>
+                <p style={{ fontSize: 11, color: "var(--ink-4)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12, fontWeight: 600 }}>question</p>
+                <p style={{ fontSize: 17, fontWeight: 600, color: "var(--ink)", lineHeight: 1.6 }}>{card.question}</p>
+                <p style={{ fontSize: 11, color: "var(--ink-4)", marginTop: 16, fontStyle: "italic" }}>click to flip</p>
+              </div>
             </div>
 
             {/* Back */}
-            <div className="absolute inset-0 rounded-2xl p-8 flex flex-col items-center justify-center text-center"
-              style={{
-                backgroundColor: "var(--surface2)",
-                border: "1px solid rgba(212,137,10,0.4)",
-                boxShadow: "0 0 40px rgba(212,137,10,0.12)",
-                backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-                transform: "rotateY(180deg)",
-              }}>
-              <p className="text-xs uppercase tracking-widest mb-4 font-sans font-semibold" style={{ color: "var(--amber)" }}>
-                Answer
-              </p>
-              <p className="font-serif text-xl font-semibold leading-relaxed" style={{ color: "var(--text)" }}>
-                {card.answer}
-              </p>
+            <div className="ruled" style={{
+              position: "absolute", inset: 0,
+              border: `1px solid ${diffColor[difficulty]}`,
+              borderRadius: 3, padding: "32px 28px",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center",
+              backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+              boxShadow: "3px 4px 0 var(--border-2)",
+              background: "var(--sticky-b)",
+            }}>
+              <p className="hand" style={{ fontSize: 13, color: "var(--blue)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 700 }}>answer</p>
+              <p style={{ fontSize: 17, fontWeight: 600, color: "var(--ink)", lineHeight: 1.6 }}>{card.answer}</p>
             </div>
           </div>
         </div>
 
-        {/* Answer buttons */}
-        {isFlipped && (
-          <div className="flex gap-3 mt-6 w-full max-w-xl relative z-10">
-            <button onClick={() => markAnswer(false)}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold text-sm transition-all active:scale-95"
-              style={{ borderColor: "rgba(248,113,113,0.3)", color: "#f87171", backgroundColor: "rgba(248,113,113,0.05)" }}>
-              <XCircle size={16} /> Still Learning
+        {/* Mark buttons */}
+        {flipped && (
+          <div style={{ display: "flex", gap: 10, marginTop: 16, width: "100%", maxWidth: 520 }}>
+            <button onClick={() => mark(false)} style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              padding: "10px", borderRadius: 4,
+              background: "var(--red-light)", color: "var(--red)",
+              border: "1.5px solid #fca5a5", cursor: "pointer", fontWeight: 600, fontSize: 14,
+              fontFamily: "var(--font-hand)",
+            }}>
+              <XCircle size={16} /> still learning
             </button>
-            <button onClick={() => markAnswer(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold text-sm transition-all active:scale-95"
-              style={{ borderColor: "rgba(74,222,128,0.3)", color: "#4ade80", backgroundColor: "rgba(74,222,128,0.05)" }}>
-              <CheckCircle size={16} /> Got It!
+            <button onClick={() => mark(true)} style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              padding: "10px", borderRadius: 4,
+              background: "var(--green-light)", color: "var(--green)",
+              border: "1.5px solid #86efac", cursor: "pointer", fontWeight: 600, fontSize: 14,
+              fontFamily: "var(--font-hand)",
+            }}>
+              <CheckCircle size={16} /> got it!
             </button>
           </div>
         )}
 
-        {/* Nav dots */}
-        <div className="flex items-center gap-4 mt-6 relative z-10">
-          <button onClick={() => navigate("prev")} disabled={currentIndex === 0 || isAnimating}
-            className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all disabled:opacity-30"
-            style={{ borderColor: "var(--border-warm)", color: "var(--text-muted)", backgroundColor: "var(--surface)" }}>
+        {/* Nav */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
+          <button onClick={() => go("prev")} disabled={idx === 0 || anim} style={{
+            width: 36, height: 36, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "var(--card)", border: "1.5px solid var(--border)", cursor: "pointer", color: "var(--ink-3)",
+            opacity: idx === 0 ? 0.3 : 1,
+          }}>
             <ChevronLeft size={16} />
           </button>
-          <div className="flex gap-1.5 flex-wrap justify-center max-w-xs">
+
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center", maxWidth: 280 }}>
             {flashcards.map((_, i) => (
-              <button key={i} onClick={() => { if (isAnimating) return; setIsAnimating(true); setIsFlipped(false); setTimeout(() => { setCurrentIndex(i); setIsAnimating(false); }, 150); }}
-                className="w-2 h-2 rounded-full transition-all duration-200"
+              <div key={i} onClick={() => { if (anim) return; setAnim(true); setFlipped(false); setTimeout(() => { setIdx(i); setAnim(false); }, 140); }}
                 style={{
-                  backgroundColor: i === currentIndex ? "var(--amber)" : results[i] === "correct" ? "#4ade80" : results[i] === "incorrect" ? "#f87171" : "var(--border)",
-                  transform: i === currentIndex ? "scale(1.5)" : "scale(1)",
+                  width: 8, height: 8, borderRadius: "50%", cursor: "pointer",
+                  background: i === idx ? diffColor[difficulty] : results[i] === "correct" ? "#16a34a" : results[i] === "incorrect" ? "#dc2626" : "var(--border-2)",
+                  transform: i === idx ? "scale(1.5)" : "scale(1)",
+                  transition: "all .2s",
                 }} />
             ))}
           </div>
-          <button onClick={() => navigate("next")} disabled={currentIndex === flashcards.length - 1 || isAnimating}
-            className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all disabled:opacity-30"
-            style={{ borderColor: "var(--border-warm)", color: "var(--text-muted)", backgroundColor: "var(--surface)" }}>
+
+          <button onClick={() => go("next")} disabled={isLast || anim} style={{
+            width: 36, height: 36, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "var(--card)", border: "1.5px solid var(--border)", cursor: "pointer", color: "var(--ink-3)",
+            opacity: isLast ? 0.3 : 1,
+          }}>
             <ChevronRight size={16} />
           </button>
         </div>
 
-     {/* Remaining hint — shown as long as any card is unanswered */}
-{answered < flashcards.length && (
-  <p className="text-xs mt-4 font-serif italic" style={{ color: "var(--text-faint)" }}>
-    {flashcards.length - answered} card{flashcards.length - answered !== 1 ? "s" : ""} remaining
-    — flip each card and mark it before finishing
-  </p>
-)}
-
-{/* Unanswered warning — if user tries skipping to last */}
-{answered < flashcards.length && currentIndex === flashcards.length - 1 && isFlipped && (
-  <div
-    className="mt-4 rounded-xl border p-3 flex items-center gap-2"
-    style={{
-      backgroundColor: "rgba(212,137,10,0.04)",
-      borderColor: "rgba(212,137,10,0.2)",
-    }}
-  >
-    <span style={{ color: "var(--amber)", fontSize: 13 }}>⚠</span>
-    <p className="text-xs font-serif italic" style={{ color: "var(--amber)" }}>
-      Go back and mark all cards before finishing.
-    </p>
-  </div>
-)}
-
-{/* Finish — ONLY when every single card has been answered */}
-{answered === flashcards.length && (
-  <button
-    onClick={() => onDone(correct)}
-    className="mt-6 flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
-    style={{
-      backgroundColor: "var(--amber)",
-      color: "#080604",
-      boxShadow: "0 4px 20px rgba(212,137,10,0.35)",
-    }}
-  >
-    <RotateCcw size={15} />
-    {isCombinedPhase ? "Next Phase →" : "See Results"}
-  </button>
-)}
+        {/* Status */}
+        {answered < flashcards.length ? (
+          <p style={{ fontSize: 12, color: "var(--ink-4)", marginTop: 12, fontStyle: "italic" }}>
+            {flashcards.length - answered} card{flashcards.length - answered !== 1 ? "s" : ""} left — mark each one to finish
+          </p>
+        ) : (
+          <button onClick={() => onDone(correct)} style={{
+            marginTop: 16, display: "flex", alignItems: "center", gap: 6,
+            padding: "10px 24px", borderRadius: 4,
+            background: "var(--blue)", color: "#fff",
+            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 700,
+            fontFamily: "var(--font-hand)",
+            boxShadow: "3px 4px 0 rgba(37,99,235,0.25)",
+          }}>
+            <RotateCcw size={15} />
+            {isCombinedPhase ? "next phase →" : "see results"}
+          </button>
+        )}
       </div>
     </div>
   );

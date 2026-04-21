@@ -2,282 +2,163 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { BookOpen, Zap, Clock, Library, ChevronRight, Flame } from "lucide-react";
-
-const features = [
-  {
-    icon: Library,
-    title: "Your Digital Library",
-    desc: "Upload PDFs, notes, images — we extract everything just like a librarian would.",
-    color: "#d4890a",
-    bg: "rgba(212,137,10,0.1)",
-  },
-  {
-    icon: BookOpen,
-    title: "AI-Crafted Reviewers",
-    desc: "LLaMA 3.3 70B generates flashcards and quizzes from your actual material.",
-    color: "#9e2424",
-    bg: "rgba(158,36,36,0.1)",
-  },
-  {
-    icon: Zap,
-    title: "Multiple Study Modes",
-    desc: "Flashcards, multiple choice quizzes, or both combined for maximum retention.",
-    color: "#d4890a",
-    bg: "rgba(212,137,10,0.1)",
-  },
-  {
-    icon: Clock,
-    title: "5 Minutes to Go?",
-    desc: "Cram mode hits the most critical topics fast. No fluff, just what matters.",
-    color: "#dc2626",
-    bg: "rgba(220,38,38,0.1)",
-  },
-];
+import { ChevronRight, Upload, Brain, Zap, BarChart2 } from "lucide-react";
 
 export default function HomePage() {
   const { user } = useAuth();
 
   return (
-    <main
-      className="min-h-screen flex flex-col"
-      style={{ backgroundColor: "var(--bg)" }}
-    >
-      {/* Ambient lamp glow at top */}
-      <div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none z-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at top, rgba(212,137,10,0.08) 0%, transparent 70%)",
-        }}
-      />
+    <div style={{ background: "var(--paper)", minHeight: "100vh" }}>
 
-      {/* Navbar */}
-      <nav
-        className="relative z-10 flex items-center justify-between px-6 py-4 border-b max-w-7xl mx-auto w-full"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center animate-flicker"
-            style={{ backgroundColor: "rgba(212,137,10,0.15)", border: "1px solid rgba(212,137,10,0.3)" }}
-          >
-            <Flame size={16} style={{ color: "var(--amber)" }} />
-          </div>
-          <span
-            className="font-serif font-bold text-xl tracking-wide"
-            style={{ color: "var(--text)" }}
-          >
-            RevYouw
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
+      {/* Top nav — single strip, no redundancy */}
+      <nav style={{
+        background: "var(--card)",
+        borderBottom: "1.5px solid var(--border)",
+        padding: "0 24px",
+        height: "48px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        <span className="hand" style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)" }}>
+          Review<span style={{ color: "var(--blue)" }}>AI</span>
+        </span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {user ? (
-            <Link
-              href="/dashboard"
-              className="px-5 py-2 rounded-lg font-semibold text-sm transition-all duration-200 active:scale-95"
-              style={{
-                backgroundColor: "var(--amber)",
-                color: "#080604",
-              }}
-            >
-              Dashboard
+            <Link href="/dashboard" style={{
+              background: "var(--blue)", color: "#fff",
+              padding: "6px 16px", borderRadius: 4,
+              fontSize: 13, fontWeight: 600, textDecoration: "none",
+            }}>
+              my desk →
             </Link>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ color: "var(--text-muted)" }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="px-5 py-2 rounded-lg font-semibold text-sm transition-all duration-200 active:scale-95"
-                style={{ backgroundColor: "var(--amber)", color: "#080604" }}
-              >
-                Get Started
+              <Link href="/login" style={{ fontSize: 13, color: "var(--ink-3)", textDecoration: "none" }}>sign in</Link>
+              <Link href="/signup" style={{
+                background: "var(--blue)", color: "#fff",
+                padding: "6px 16px", borderRadius: 4,
+                fontSize: 13, fontWeight: 600, textDecoration: "none",
+              }}>
+                get started
               </Link>
             </>
           )}
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-24 animate-fade-up">
-        {/* Panic badge */}
-        <div
-          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8 text-sm font-medium animate-glow-panic"
-          style={{
-            backgroundColor: "var(--panic-dim)",
-            border: "1px solid rgba(220,38,38,0.35)",
-            color: "#fca5a5",
-          }}
-        >
-          <Clock size={13} />
-          Exam tomorrow? We&apos;ve got you.
-        </div>
+      {/* Hero — looks like a pinned note on a board */}
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 0" }} className="fade-up">
 
-        <h1
-          className="font-serif font-black leading-none mb-6"
-          style={{ fontSize: "clamp(3rem, 8vw, 6.5rem)", color: "var(--text)" }}
-        >
-          Study Smarter.
-          <br />
-          <em
-            style={{
-              color: "var(--amber)",
-              fontStyle: "italic",
-              textShadow: "0 0 40px rgba(212,137,10,0.4)",
-            }}
-          >
-            Panic Less.
-          </em>
-        </h1>
-
-        <p
-          className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed"
-          style={{ color: "var(--text-muted)" }}
-        >
-          Upload your notes, textbook pages, or reviewer files. Our AI turns them into
-          flashcards and quizzes — whether you have a week or{" "}
-          <span style={{ color: "#fca5a5", fontWeight: 600 }}>5 minutes</span> left.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <Link
-            href="/review"
-            className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 active:scale-95"
-            style={{
-              backgroundColor: "var(--amber)",
-              color: "#080604",
-              boxShadow: "0 4px 30px rgba(212,137,10,0.35)",
-            }}
-          >
-            <Flame size={18} />
-            Start Reviewing Now
-            <ChevronRight size={18} />
-          </Link>
-          {!user && (
-            <Link
-              href="/signup"
-              className="flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200"
-              style={{
-                border: "1px solid var(--border-warm)",
-                color: "var(--text-warm)",
-                backgroundColor: "var(--surface)",
-              }}
-            >
-              Create Free Account
+        {/* Tape-pinned heading card */}
+        <div style={{
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 3,
+          padding: "36px 40px",
+          position: "relative",
+          marginBottom: 24,
+          boxShadow: "3px 4px 0 var(--border-2)",
+        }} className="tape">
+          <div style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: "0.1em",
+            color: "var(--ink-4)", textTransform: "uppercase", marginBottom: 12,
+          }}>
+            AI-powered reviewer
+          </div>
+          <h1 className="hand" style={{
+            fontSize: "clamp(2.4rem, 6vw, 3.6rem)",
+            fontWeight: 700, lineHeight: 1.15,
+            color: "var(--ink)", marginBottom: 16,
+          }}>
+            Stop re-reading.<br />
+            <span className="hi-y">Start remembering.</span>
+          </h1>
+          <p style={{ fontSize: 15, color: "var(--ink-2)", lineHeight: 1.7, marginBottom: 24, maxWidth: 480 }}>
+            Upload your PDF, PowerPoint, or photo of your notes.
+            We generate flashcards and quizzes from your actual material — not generic ones.
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/review" style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "var(--blue)", color: "#fff",
+              padding: "10px 22px", borderRadius: 4,
+              fontSize: 14, fontWeight: 600, textDecoration: "none",
+            }}>
+              start a session <ChevronRight size={15} />
             </Link>
-          )}
+            {!user && (
+              <Link href="/signup" style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "transparent", color: "var(--ink-2)",
+                padding: "9px 20px", borderRadius: 4,
+                fontSize: 14, fontWeight: 500, textDecoration: "none",
+                border: "1.5px solid var(--border)",
+              }}>
+                save your progress
+              </Link>
+            )}
+          </div>
+          <p style={{ fontSize: 12, color: "var(--ink-4)", marginTop: 12 }}>
+            no account needed to try · sign in to keep your files
+          </p>
         </div>
 
-        <p className="mt-5 text-sm" style={{ color: "var(--text-faint)" }}>
-          No account needed to try &nbsp;·&nbsp; Sign in to save your library
-        </p>
-      </section>
-
-      {/* The mood divider */}
-      <div
-        className="max-w-7xl mx-auto w-full px-6 py-2 flex items-center gap-4"
-        style={{ color: "var(--text-faint)" }}
-      >
-        <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
-        <span className="font-serif italic text-sm">
-          It&apos;s 2am. The exam is at 8. Let&apos;s go.
-        </span>
-        <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
-      </div>
-
-      {/* Features */}
-      <section className="relative z-10 py-20 px-6 max-w-6xl mx-auto w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              className="rounded-2xl p-6 flex flex-col gap-4 group hover:-translate-y-1 transition-all duration-300"
-              style={{
-                backgroundColor: "var(--surface)",
-                border: "1px solid var(--border)",
-                animationDelay: `${i * 0.1}s`,
-              }}
-            >
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: f.bg, border: `1px solid ${f.color}30` }}
-              >
-                <f.icon size={20} style={{ color: f.color }} />
+        {/* Three index cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 24 }}>
+          {[
+            { icon: Upload, label: "Upload anything", desc: "PDF, PPTX, DOCX, images, Excel, iPhone photos", color: "var(--blue)", bg: "var(--blue-light)" },
+            { icon: Brain, label: "AI generates questions", desc: "Flashcards and quizzes from your exact material — no hallucinating", color: "#7c3aed", bg: "#ede9fe" },
+            { icon: BarChart2, label: "3 difficulty levels", desc: "Easy for warm-up, Hard for the night before the exam", color: "var(--green)", bg: "var(--green-light)" },
+          ].map((f, i) => (
+            <div key={f.label} style={{
+              background: "var(--card)", border: "1px solid var(--border)",
+              borderRadius: 3, padding: "16px 18px",
+              boxShadow: "2px 3px 0 var(--border-2)",
+              animationDelay: `${i * 0.08}s`,
+            }} className="paper-in">
+              <div style={{
+                width: 32, height: 32, borderRadius: 4,
+                background: f.bg, display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 10,
+              }}>
+                <f.icon size={16} style={{ color: f.color }} />
               </div>
-              <div>
-                <h3
-                  className="font-serif font-semibold text-lg mb-1.5"
-                  style={{ color: "var(--text)" }}
-                >
-                  {f.title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  {f.desc}
-                </p>
-              </div>
+              <div className="hand" style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>{f.label}</div>
+              <p style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>{f.desc}</p>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* CTA Banner */}
-      <section className="px-6 pb-20 max-w-6xl mx-auto w-full">
-        <div
-          className="rounded-2xl p-10 flex flex-col md:flex-row items-center justify-between gap-6"
-          style={{
-            backgroundColor: "var(--surface2)",
-            border: "1px solid var(--border-warm)",
-            background: `linear-gradient(135deg, var(--surface2) 0%, rgba(124,29,29,0.15) 100%)`,
-          }}
-        >
+        {/* Bottom sticky note CTA */}
+        <div style={{
+          background: "var(--sticky-y)", border: "1px solid #f0e060",
+          borderRadius: 2, padding: "20px 24px",
+          transform: "rotate(-0.3deg)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 16, flexWrap: "wrap",
+          boxShadow: "2px 3px 0 #e6d640",
+          marginBottom: 48,
+        }}>
           <div>
-            <h2
-              className="font-serif font-bold text-3xl mb-2"
-              style={{ color: "var(--text)" }}
-            >
-              Your library. Your pace.
-            </h2>
-            <p style={{ color: "var(--text-muted)" }}>
-              Save files, combine reviewers, track progress — all free.
-            </p>
+            <div className="hand" style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>
+              Save files, combine reviewers, track scores
+            </div>
+            <p style={{ fontSize: 13, color: "#78716c" }}>Free account · no credit card</p>
           </div>
-          <Link
-            href="/signup"
-            className="flex-shrink-0 flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold transition-all active:scale-95"
-            style={{
-              backgroundColor: "var(--burgundy2)",
-              color: "var(--text-warm)",
-              border: "1px solid rgba(158,36,36,0.5)",
-              boxShadow: "0 4px 20px rgba(124,29,29,0.3)",
-            }}
-          >
-            <BookOpen size={16} />
-            Open Your Library
+          <Link href="/signup" style={{
+            background: "var(--ink)", color: "var(--card)",
+            padding: "9px 20px", borderRadius: 4,
+            fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap",
+          }}>
+            create account
           </Link>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer
-        className="text-center text-xs py-6 border-t"
-        style={{
-          borderColor: "var(--border)",
-          color: "var(--text-faint)",
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-        }}
-      >
-        © {new Date().getFullYear()} RevYouw — Forged at midnight, tested at dawn.
-      </footer>
-    </main>
+        <p style={{ textAlign: "center", fontSize: 12, color: "var(--ink-5)", paddingBottom: 32, fontStyle: "italic" }}>
+          good luck on your exam ✧
+        </p>
+      </div>
+    </div>
   );
 }

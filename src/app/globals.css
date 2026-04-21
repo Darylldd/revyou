@@ -1,132 +1,458 @@
 @import "tailwindcss";
 
-/* ─── Fonts ──────────────────────────────────────────── */
-:root {
+/* ── Base (paper theme = default) ─────────────────────── */
+:root, [data-theme="paper"] {
   --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-hand: 'Caveat', cursive;
 
-  /* ─── Palette: Midnight Library ─────────────────────── */
-  --bg:           #080604;
-  --bg-warm:      #0d0a06;
-  --surface:      #110e09;
-  --surface2:     #1a1510;
-  --surface3:     #221c14;
-  --border:       #2d2318;
-  --border-warm:  #3d3020;
+  --paper:      #f0ebe0;
+  --paper-2:    #e8e1d4;
+  --card:       #fffef9;
+  --card-2:     #faf7f0;
 
-  /* Lamp Glow — amber gold */
-  --amber:        #d4890a;
-  --amber-light:  #f5a623;
-  --amber-dim:    #8a5a08;
-  --amber-glow:   rgba(212, 137, 10, 0.12);
-  --amber-glow2:  rgba(212, 137, 10, 0.06);
+  --ink:        #1c1917;
+  --ink-2:      #44403c;
+  --ink-3:      #78716c;
+  --ink-4:      #a8a29e;
+  --ink-5:      #d6cfc4;
 
-  /* Library Burgundy */
-  --burgundy:     #7c1d1d;
-  --burgundy2:    #9e2424;
-  --burgundy-dim: rgba(124, 29, 29, 0.2);
+  --rule:       #dde8f5;
+  --rule-red:   #f9c0c0;
+  --border:     #c9bfad;
+  --border-2:   #d6cfc4;
 
-  /* 5-min Panic Red */
-  --panic:        #dc2626;
-  --panic-dim:    rgba(220, 38, 38, 0.15);
+  --blue:       #2563eb;
+  --blue-2:     #1d4ed8;
+  --blue-light: #dbeafe;
+  --blue-dim:   rgba(37,99,235,0.1);
+  --btn-shadow: rgba(37,99,235,0.28);
 
-  /* Text — warm parchment */
-  --text:         #f0e6d3;
-  --text-warm:    #e8d9c0;
-  --text-muted:   #7a6a58;
-  --text-faint:   #4a3e30;
+  --red:        #dc2626;
+  --red-light:  #fee2e2;
+  --green:      #16a34a;
+  --green-light:#dcfce7;
+  --yellow:     #d97706;
 
-  /* Semantic */
-  --success:      #4ade80;
-  --success-dim:  rgba(74, 222, 128, 0.1);
+  --hi-yellow:  rgba(254,240,80,0.55);
+  --hi-pink:    rgba(255,150,200,0.4);
+  --hi-blue:    rgba(147,197,253,0.45);
+
+  --sticky-y:   #fef9c3;
+  --sticky-p:   #fce7f3;
+  --sticky-b:   #dbeafe;
+  --sticky-g:   #dcfce7;
+  --tape:       #f5e6a3;
+
+  --radius-btn: 3px;
+  --font-btn:   var(--font-hand);
+  --font-btn-size: 15px;
 }
 
-* { box-sizing: border-box; }
+/* ── Hello Kitty ──────────────────────────────────────── */
+[data-theme="hello-kitty"] {
+  --paper:      #fff0f5;
+  --paper-2:    #fce4ee;
+  --card:       #fff5f8;
+  --card-2:     #ffeef4;
 
+  --ink:        #3d1a2e;
+  --ink-2:      #6b3553;
+  --ink-3:      #a06080;
+  --ink-4:      #d4a0b8;
+  --ink-5:      #f4d0e0;
+
+  --rule:       #ffd6e7;
+  --rule-red:   #ff85b3;
+  --border:     #f4b8d0;
+  --border-2:   #f8cfe0;
+
+  --blue:       #e91e8c;
+  --blue-2:     #c2185b;
+  --blue-light: #fce7f3;
+  --blue-dim:   rgba(233,30,140,0.1);
+  --btn-shadow: rgba(233,30,140,0.28);
+
+  --red:        #e91e8c;
+  --red-light:  #fce7f3;
+  --green:      #e91e8c;
+  --green-light:#fce7f3;
+  --yellow:     #f06292;
+
+  --hi-yellow:  rgba(255,182,193,0.6);
+  --hi-pink:    rgba(244,114,182,0.4);
+  --hi-blue:    rgba(249,168,212,0.45);
+
+  --sticky-y:   #fff0f5;
+  --sticky-p:   #fce7f3;
+  --sticky-b:   #fce7f3;
+  --sticky-g:   #fce7f3;
+  --tape:       #ffc0cb;
+
+  --radius-btn: 12px;
+  --font-btn:   var(--font-hand);
+  --font-btn-size: 15px;
+}
+
+/* ── Readable ─────────────────────────────────────────── */
+[data-theme="readable"] {
+  --paper:      #ffffff;
+  --paper-2:    #f3f4f6;
+  --card:       #ffffff;
+  --card-2:     #f9fafb;
+
+  --ink:        #111827;
+  --ink-2:      #374151;
+  --ink-3:      #6b7280;
+  --ink-4:      #9ca3af;
+  --ink-5:      #e5e7eb;
+
+  --rule:       #e5e7eb;
+  --rule-red:   #fecaca;
+  --border:     #d1d5db;
+  --border-2:   #e5e7eb;
+
+  --blue:       #1d4ed8;
+  --blue-2:     #1e40af;
+  --blue-light: #dbeafe;
+  --blue-dim:   rgba(29,78,216,0.08);
+  --btn-shadow: rgba(29,78,216,0.2);
+
+  --red:        #dc2626;
+  --red-light:  #fee2e2;
+  --green:      #16a34a;
+  --green-light:#dcfce7;
+  --yellow:     #d97706;
+
+  --hi-yellow:  rgba(254,240,138,0.5);
+  --hi-pink:    rgba(251,191,36,0.3);
+  --hi-blue:    rgba(147,197,253,0.4);
+
+  --sticky-y:   #fefce8;
+  --sticky-p:   #fdf2f8;
+  --sticky-b:   #eff6ff;
+  --sticky-g:   #f0fdf4;
+  --tape:       #fef9c3;
+
+  --radius-btn: 6px;
+  --font-btn:   var(--font-sans);
+  --font-btn-size: 13px;
+}
+
+/* ── Dark ─────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --paper:      #0f0f18;
+  --paper-2:    #13131f;
+  --card:       #1a1a2e;
+  --card-2:     #242438;
+
+  --ink:        #f0eeff;
+  --ink-2:      #c4bfe8;
+  --ink-3:      #8882b8;
+  --ink-4:      #5a5580;
+  --ink-5:      #2e2a50;
+
+  --rule:       #1e1e32;
+  --rule-red:   #3d2040;
+  --border:     #2e2a50;
+  --border-2:   #3d3a60;
+
+  --blue:       #818cf8;
+  --blue-2:     #6366f1;
+  --blue-light: rgba(129,140,248,0.15);
+  --blue-dim:   rgba(129,140,248,0.1);
+  --btn-shadow: rgba(129,140,248,0.3);
+
+  --red:        #f87171;
+  --red-light:  rgba(248,113,113,0.12);
+  --green:      #4ade80;
+  --green-light:rgba(74,222,128,0.12);
+  --yellow:     #fbbf24;
+
+  --hi-yellow:  rgba(251,191,36,0.25);
+  --hi-pink:    rgba(244,114,182,0.2);
+  --hi-blue:    rgba(129,140,248,0.2);
+
+  --sticky-y:   #2a2820;
+  --sticky-p:   #2a1f2e;
+  --sticky-b:   #1a2040;
+  --sticky-g:   #1a2820;
+  --tape:       #3d3820;
+
+  --radius-btn: 4px;
+  --font-btn:   var(--font-sans);
+  --font-btn-size: 13px;
+}
+
+/* ── Plain ────────────────────────────────────────────── */
+[data-theme="plain"] {
+  --paper:      #fafafa;
+  --paper-2:    #f0f0f0;
+  --card:       #ffffff;
+  --card-2:     #f5f5f5;
+
+  --ink:        #000000;
+  --ink-2:      #1a1a1a;
+  --ink-3:      #555555;
+  --ink-4:      #888888;
+  --ink-5:      #cccccc;
+
+  --rule:       #e8e8e8;
+  --rule-red:   #d0d0d0;
+  --border:     #bbbbbb;
+  --border-2:   #dddddd;
+
+  --blue:       #222222;
+  --blue-2:     #000000;
+  --blue-light: #eeeeee;
+  --blue-dim:   rgba(0,0,0,0.06);
+  --btn-shadow: rgba(0,0,0,0.15);
+
+  --red:        #000000;
+  --red-light:  #f0f0f0;
+  --green:      #000000;
+  --green-light:#f5f5f5;
+  --yellow:     #333333;
+
+  --hi-yellow:  rgba(0,0,0,0.06);
+  --hi-pink:    rgba(0,0,0,0.04);
+  --hi-blue:    rgba(0,0,0,0.05);
+
+  --sticky-y:   #f5f5f5;
+  --sticky-p:   #f0f0f0;
+  --sticky-b:   #eeeeee;
+  --sticky-g:   #f0f0f0;
+  --tape:       #e0e0e0;
+
+  --radius-btn: 0px;
+  --font-btn:   var(--font-sans);
+  --font-btn-size: 12px;
+}
+
+/* ── Global resets ────────────────────────────────────── */
+* { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  /* Subtle paper grain via repeating gradient */
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,137,10,0.07) 0%, transparent 60%);
+  transition: background 0.2s, color 0.2s;
 }
 
-/* ─── Typography ──────────────────────────────────────── */
-.font-serif  { font-family: var(--font-serif); }
-.font-sans   { font-family: var(--font-sans); }
-
-h1, h2, h3 {
-  font-family: var(--font-serif);
-  color: var(--text);
+/* ── Ruled paper ──────────────────────────────────────── */
+.ruled {
+  background: repeating-linear-gradient(
+    var(--card),
+    var(--card) 27px,
+    var(--rule) 27px,
+    var(--rule) 28px
+  );
 }
 
-/* ─── Scrollbar ───────────────────────────────────────── */
+/* In dark/plain/readable themes, ruled = plain card bg */
+[data-theme="dark"] .ruled,
+[data-theme="plain"] .ruled,
+[data-theme="readable"] .ruled {
+  background: var(--card);
+}
+
+[data-theme="hello-kitty"] .ruled {
+  background: repeating-linear-gradient(
+    var(--card),
+    var(--card) 27px,
+    var(--rule) 27px,
+    var(--rule) 28px
+  );
+}
+
+.margined { border-left: 2px solid var(--rule-red); padding-left: 16px; }
+.hand { font-family: var(--font-hand); }
+
+/* In plain/readable theme, hand font = normal */
+[data-theme="plain"] .hand,
+[data-theme="readable"] .hand {
+  font-family: var(--font-sans);
+}
+
+/* ── Buttons — ink sticker style ─────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-btn);
+  font-size: var(--font-btn-size);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 2px 3px 0 var(--btn-shadow);
+  transform: rotate(-0.3deg);
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+}
+
+.btn-primary:hover {
+  transform: rotate(0deg) translateY(-1px);
+  box-shadow: 3px 4px 0 var(--btn-shadow);
+}
+
+.btn-primary:active {
+  transform: rotate(0deg) translateY(1px);
+  box-shadow: 1px 1px 0 var(--btn-shadow);
+}
+
+/* Hello kitty — round pill */
+[data-theme="hello-kitty"] .btn-primary {
+  border-radius: 14px;
+  transform: none;
+}
+
+/* Plain — square, no shadow */
+[data-theme="plain"] .btn-primary {
+  box-shadow: none;
+  transform: none;
+  border-radius: 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Readable — standard rounded */
+[data-theme="readable"] .btn-primary {
+  transform: none;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px var(--btn-shadow);
+}
+
+/* Dark — glow effect */
+[data-theme="dark"] .btn-primary {
+  transform: none;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(129,140,248,0.3), 2px 3px 0 rgba(129,140,248,0.2);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--card);
+  color: var(--ink-2);
+  border: 1.5px solid var(--border);
+  padding: 6px 14px;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-btn);
+  font-size: var(--font-btn-size);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 var(--border-2);
+  transition: all 0.1s;
+}
+
+.btn-secondary:hover { background: var(--paper); }
+[data-theme="plain"] .btn-secondary { box-shadow: none; border-radius: 0; }
+[data-theme="readable"] .btn-secondary { box-shadow: none; border-radius: 6px; }
+
+/* ── Highlighter utilities ────────────────────────────── */
+.hi-y { background: linear-gradient(transparent 55%, var(--hi-yellow) 55%); }
+.hi-p { background: linear-gradient(transparent 55%, var(--hi-pink) 55%); }
+.hi-b { background: linear-gradient(transparent 55%, var(--hi-blue) 55%); }
+
+/* ── Tape strip ───────────────────────────────────────── */
+.tape::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 14px;
+  background: var(--tape);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 1px;
+  opacity: 0.85;
+}
+[data-theme="dark"] .tape::before,
+[data-theme="plain"] .tape::before,
+[data-theme="readable"] .tape::before { display: none; }
+
+/* ── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border-warm); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--amber-dim); }
+::-webkit-scrollbar-track { background: var(--paper-2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
 
-/* ─── Glow pulse — for panic elements ────────────────── */
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(220,38,38,0.4); }
-  50%       { box-shadow: 0 0 20px rgba(220,38,38,0.7); }
-}
-
-@keyframes amber-flicker {
-  0%, 100% { opacity: 1; }
-  92%       { opacity: 1; }
-  93%       { opacity: 0.85; }
-  94%       { opacity: 1; }
-  97%       { opacity: 0.9; }
-  98%       { opacity: 1; }
-}
-
+/* ── Animations ──────────────────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes paperIn {
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-6px); }
-}
+.fade-up  { animation: fadeUp 0.35s ease-out both; }
+.paper-in { animation: paperIn 0.4s ease-out both; }
 
-.animate-fade-up    { animation: fadeUp 0.5s ease-out both; }
-.animate-flicker    { animation: amber-flicker 4s ease-in-out infinite; }
-.animate-float      { animation: float 3s ease-in-out infinite; }
-.animate-glow-panic { animation: glow-pulse 1.5s ease-in-out infinite; }
+*:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+/* ── Mobile responsiveness ────────────────────────────── */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
 
-/* ─── Lamp glow overlay ───────────────────────────────── */
-.lamp-glow {
-  position: relative;
-}
-.lamp-glow::before {
-  content: "";
-  position: absolute;
-  top: -60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(212,137,10,0.12) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+  /* Dashboard layout main padding */
+  main {
+    padding: 16px 12px !important;
+  }
 
-/* ─── Book spine border ───────────────────────────────── */
-.book-spine {
-  border-left: 3px solid var(--burgundy2);
-  padding-left: 1rem;
-}
+  /* Top bar adjustments */
+  header {
+    padding: 0 12px !important;
+    height: auto !important;
+    min-height: 48px;
+    flex-wrap: wrap;
+  }
 
-/* ─── Panic border ────────────────────────────────────── */
-.panic-border {
-  border-color: var(--panic) !important;
-  animation: glow-pulse 1.5s ease-in-out infinite;
+  /* Hide user name on very small screens, keep avatar only */
+  .user-name-text {
+    display: none;
+  }
+
+  /* Tabs scrollable horizontally */
+  .dashboard-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 8px;
+  }
+
+  /* Grid columns for reviewer cards */
+  .reviewer-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats cards */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Buttons full width on mobile if needed */
+  .btn-primary,
+  .btn-secondary {
+    white-space: nowrap;
+  }
+
+  /* Dropzone padding */
+  .upload-dropzone {
+    padding: 24px 12px !important;
+  }
 }

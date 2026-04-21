@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CheckCircle,
-  XCircle,
-  ChevronRight,
-  Lightbulb,
-  RotateCcw,
-  BookOpen,
-} from "lucide-react";
+import { CheckCircle, XCircle, ChevronRight, Lightbulb, RotateCcw } from "lucide-react";
 import type { MultipleChoiceQuestion, DifficultyLevel } from "@/types";
 
 interface Props {
@@ -20,389 +13,219 @@ interface Props {
 }
 
 const LABELS = ["A", "B", "C", "D"];
+const diffColor: Record<DifficultyLevel, string> = { easy: "#16a34a", medium: "#d97706", hard: "#dc2626" };
 
-const difficultyStyle: Record<DifficultyLevel, { color: string; bg: string }> = {
-  easy:   { color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
-  medium: { color: "#d4890a", bg: "rgba(212,137,10,0.1)" },
-  hard:   { color: "#dc2626", bg: "rgba(220,38,38,0.1)" },
-};
-
-export default function MultipleChoiceMode({
-  questions,
-  difficulty,
-  onDone,
-  isCombinedPhase,
-  phaseLabel,
-}: Props) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+export default function MultipleChoiceMode({ questions, difficulty, onDone, isCombinedPhase, phaseLabel }: Props) {
+  const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showExp, setShowExp] = useState(false);
   const [correct, setCorrect] = useState(0);
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    () => new Array(questions.length).fill(null)
-  );
+  const [answers, setAnswers] = useState<(number | null)[]>(() => new Array(questions.length).fill(null));
   const [transitioning, setTransitioning] = useState(false);
 
-  const q = questions[currentIndex];
-  const isAnswered = selected !== null;
+  const q = questions[idx];
+  const answered = selected !== null;
   const isCorrect = selected === q.correctIndex;
-  const progress = (currentIndex / questions.length) * 100;
-  const isLast = currentIndex === questions.length - 1;
+  const isLast = idx === questions.length - 1;
+  const progress = Math.round(((idx) / questions.length) * 100);
   const answeredCount = answers.filter((a) => a !== null).length;
-  const ds = difficultyStyle[difficulty];
 
-  function handleSelect(i: number) {
-    if (isAnswered || transitioning) return;
-    const newAnswers = [...answers];
-    newAnswers[currentIndex] = i;
-    setAnswers(newAnswers);
-    setSelected(i);
+  function pick(i: number) {
+    if (answered || transitioning) return;
+    const na = [...answers]; na[idx] = i;
+    setAnswers(na); setSelected(i);
     if (i === q.correctIndex) setCorrect((c) => c + 1);
   }
 
-  function handleNext() {
-    if (transitioning || !isAnswered) return;
+  function next() {
+    if (!answered || transitioning) return;
     if (isLast) { onDone(correct); return; }
-    setTransitioning(true);
-    setShowExp(false);
-    setTimeout(() => {
-      setCurrentIndex((i) => i + 1);
-      setSelected(null);
-      setTransitioning(false);
-    }, 200);
-  }
-
-  function choiceBorderColor(idx: number): string {
-    if (!isAnswered) return "var(--border-warm)";
-    if (idx === q.correctIndex) return "rgba(74,222,128,0.5)";
-    if (idx === selected) return "rgba(248,113,113,0.5)";
-    return "var(--border)";
-  }
-
-  function choiceBg(idx: number): string {
-    if (!isAnswered) return "var(--surface3)";
-    if (idx === q.correctIndex) return "rgba(74,222,128,0.07)";
-    if (idx === selected) return "rgba(248,113,113,0.07)";
-    return "rgba(255,255,255,0.01)";
-  }
-
-  function choiceTextColor(idx: number): string {
-    if (!isAnswered) return "var(--text-warm)";
-    if (idx === q.correctIndex) return "#4ade80";
-    if (idx === selected && idx !== q.correctIndex) return "#f87171";
-    return "var(--text-faint)";
-  }
-
-  function labelBg(idx: number): string {
-    if (!isAnswered) return "var(--surface)";
-    if (idx === q.correctIndex) return "rgba(74,222,128,0.2)";
-    if (idx === selected) return "rgba(248,113,113,0.2)";
-    return "var(--surface)";
-  }
-
-  function labelColor(idx: number): string {
-    if (!isAnswered) return "var(--text-muted)";
-    if (idx === q.correctIndex) return "#4ade80";
-    if (idx === selected) return "#f87171";
-    return "var(--text-faint)";
+    setTransitioning(true); setShowExp(false);
+    setTimeout(() => { setIdx((i) => i + 1); setSelected(null); setTransitioning(false); }, 180);
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--bg)" }}>
-      {/* Progress header */}
-      <div
-        className="px-6 py-3 border-b flex items-center gap-4 sticky top-0 z-10"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--bg-warm)" }}
-      >
-        {isCombinedPhase && (
-          <span
-            className="text-xs font-semibold px-2.5 py-1 rounded-full font-serif italic whitespace-nowrap"
-            style={{ backgroundColor: "rgba(212,137,10,0.12)", color: "var(--amber)" }}
-          >
-            {phaseLabel}
-          </span>
-        )}
-        <div className="flex-1 flex items-center gap-3">
-          <span className="text-sm font-serif whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
-            {currentIndex + 1} / {questions.length}
-          </span>
-          <div
-            className="flex-1 h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: "var(--border)" }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${progress + 100 / questions.length}%`,
-                backgroundColor: "var(--burgundy2)",
-              }}
-            />
-          </div>
-          <span
-            className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize whitespace-nowrap"
-            style={{ backgroundColor: ds.bg, color: ds.color }}
-          >
-            {difficulty}
-          </span>
+    <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+
+      {/* Progress */}
+      <div style={{ background: "var(--card)", borderBottom: "1.5px solid var(--border)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+        {isCombinedPhase && <span className="hand" style={{ fontSize: 13, color: "var(--blue)", whiteSpace: "nowrap" }}>{phaseLabel}</span>}
+        <span style={{ fontSize: 12, color: "var(--ink-4)", whiteSpace: "nowrap" }}>{idx + 1} / {questions.length}</span>
+        <div style={{ flex: 1, height: 4, background: "var(--border-2)", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${progress + 100 / questions.length}%`, background: diffColor[difficulty], borderRadius: 2, transition: "width .4s" }} />
         </div>
-        <div className="flex gap-3 text-sm font-semibold">
-          <span style={{ color: "#4ade80" }}>✓ {correct}</span>
-          <span style={{ color: "#f87171" }}>✗ {answeredCount - correct}</span>
+        <div style={{ display: "flex", gap: 10, fontSize: 13, fontWeight: 600 }}>
+          <span style={{ color: "#16a34a" }}>✓ {correct}</span>
+          <span style={{ color: "#dc2626" }}>✗ {answeredCount - correct}</span>
         </div>
       </div>
 
-      {/* Main layout — side by side on desktop */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-6xl mx-auto w-full px-4 py-8 gap-6">
+      {/* Side-by-side layout */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0, maxWidth: 980, width: "100%", margin: "0 auto", padding: "24px 16px" }}>
 
-        {/* LEFT — Question panel */}
-        <div className="lg:w-1/2 flex flex-col gap-4">
-          {/* Badge */}
-          <div>
-            <span
-              className="text-xs font-semibold px-3 py-1.5 rounded-full"
-              style={{
-                backgroundColor: "var(--burgundy-dim)",
-                color: "#fca5a5",
-                border: "1px solid rgba(124,29,29,0.3)",
-              }}
-            >
-              Question {currentIndex + 1}
-            </span>
-          </div>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
 
-          {/* Question card — takes up most of the left side */}
-          <div
-            className="flex-1 rounded-2xl border p-7 flex flex-col justify-between"
-            style={{
-              backgroundColor: "var(--surface)",
-              borderColor: "var(--border-warm)",
-              boxShadow: "0 0 40px rgba(124,29,29,0.06)",
-              minHeight: "260px",
-            }}
-          >
-            <div className="flex items-start gap-3">
-              <BookOpen size={16} className="flex-shrink-0 mt-1" style={{ color: "var(--text-faint)" }} />
-              <p
-                className="font-serif text-xl font-semibold leading-relaxed"
-                style={{ color: "var(--text)" }}
-              >
-                {q.question}
-              </p>
+          {/* LEFT — Question */}
+          <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+                padding: "3px 8px", borderRadius: 2,
+                background: "var(--red-light)", color: "var(--red)",
+              }}>
+                Q{idx + 1}
+              </span>
+              <span className="hand" style={{ fontSize: 12, color: "var(--ink-4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                {difficulty}
+              </span>
             </div>
 
-            {/* Feedback after answering */}
-            {isAnswered && (
-              <div
-                className="mt-5 rounded-xl border p-3.5 flex items-start gap-3"
-                style={{
-                  backgroundColor: isCorrect ? "rgba(74,222,128,0.05)" : "rgba(248,113,113,0.05)",
-                  borderColor: isCorrect ? "rgba(74,222,128,0.25)" : "rgba(248,113,113,0.25)",
-                }}
-              >
-                <div className="mt-0.5 flex-shrink-0">
-                  {isCorrect
-                    ? <CheckCircle size={15} style={{ color: "#4ade80" }} />
-                    : <XCircle size={15} style={{ color: "#f87171" }} />
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="font-serif font-semibold text-sm"
-                    style={{ color: isCorrect ? "#4ade80" : "#f87171" }}
-                  >
-                    {isCorrect ? "Correct!" : "Incorrect"}
+            {/* Question card — ruled paper */}
+            <div className="ruled" style={{
+              border: "1px solid var(--border)", borderLeft: "3px solid var(--rule-red)",
+              borderRadius: 3, padding: "20px 20px 20px 28px",
+              flex: 1, background: "var(--card)",
+              boxShadow: "2px 3px 0 var(--border-2)",
+            }}>
+              <p style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", lineHeight: 1.65 }}>{q.question}</p>
+            </div>
+
+            {/* Feedback */}
+            {answered && (
+              <div style={{
+                border: `1px solid ${isCorrect ? "#86efac" : "#fca5a5"}`,
+                borderRadius: 3, padding: "12px 16px",
+                background: isCorrect ? "var(--green-light)" : "var(--red-light)",
+                display: "flex", alignItems: "flex-start", gap: 8,
+              }}>
+                {isCorrect ? <CheckCircle size={15} style={{ color: "#16a34a", flexShrink: 0, marginTop: 1 }} /> : <XCircle size={15} style={{ color: "#dc2626", flexShrink: 0, marginTop: 1 }} />}
+                <div style={{ flex: 1 }}>
+                  <p className="hand" style={{ fontSize: 15, fontWeight: 700, color: isCorrect ? "#16a34a" : "#dc2626", marginBottom: 2 }}>
+                    {isCorrect ? "correct!" : "incorrect"}
                   </p>
                   {!isCorrect && (
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      Correct:{" "}
-                      <span style={{ color: "#4ade80", fontWeight: 600 }}>
-                        {LABELS[q.correctIndex]}. {q.choices[q.correctIndex]}
-                      </span>
+                    <p style={{ fontSize: 12, color: "var(--ink-2)" }}>
+                      Answer: <span style={{ fontWeight: 600 }}>{LABELS[q.correctIndex]}. {q.choices[q.correctIndex]}</span>
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowExp((v) => !v)}
-                  className="flex items-center gap-1 text-xs flex-shrink-0 transition-colors"
-                  style={{ color: "var(--amber)" }}
-                >
-                  <Lightbulb size={11} />
-                  {showExp ? "Hide" : "Explanation"}
+                <button onClick={() => setShowExp((v) => !v)} style={{
+                  display: "flex", alignItems: "center", gap: 4, background: "none", border: "none",
+                  cursor: "pointer", fontSize: 12, color: "#d97706", fontWeight: 600, flexShrink: 0,
+                }}>
+                  <Lightbulb size={12} /> {showExp ? "hide" : "why?"}
                 </button>
               </div>
             )}
 
-            {/* Explanation */}
-            {showExp && isAnswered && (
-              <div
-                className="mt-3 rounded-xl border p-3.5"
-                style={{
-                  backgroundColor: "rgba(212,137,10,0.04)",
-                  borderColor: "rgba(212,137,10,0.2)",
-                }}
-              >
-                <p
-                  className="text-xs font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color: "var(--amber)" }}
-                >
-                  Explanation
-                </p>
-                <p
-                  className="text-sm leading-relaxed font-serif"
-                  style={{ color: "var(--text-warm)" }}
-                >
-                  {q.explanation}
-                </p>
+            {showExp && answered && (
+              <div style={{
+                border: "1px solid #fde047", borderRadius: 3, padding: "10px 14px",
+                background: "#fefce8", fontSize: 13, color: "var(--ink-2)", lineHeight: 1.6,
+              }}>
+                {q.explanation}
               </div>
             )}
+
+            {/* Next button — desktop only */}
+            <div style={{ display: "none" }} className="desktop-next">
+              {!answered ? (
+                <p style={{ fontSize: 12, color: "var(--ink-4)", fontStyle: "italic" }}>← pick an answer to continue</p>
+              ) : (
+                <button onClick={next} style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: "var(--blue)", color: "#fff", border: "none",
+                  borderRadius: 4, padding: "10px 20px", fontSize: 14, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "var(--font-hand)",
+                  boxShadow: "3px 4px 0 rgba(37,99,235,0.25)",
+                }}>
+                  <RotateCcw size={14} />
+                  {isLast ? (isCombinedPhase ? "final results" : "see results") : "next question"}
+                  {!isLast && <ChevronRight size={14} />}
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Next button under question on desktop */}
-          <div className="hidden lg:block">
-            {!isAnswered ? (
-              <div
-                className="rounded-xl border p-3 flex items-center gap-2"
-                style={{
-                  backgroundColor: "rgba(212,137,10,0.04)",
-                  borderColor: "rgba(212,137,10,0.15)",
-                }}
-              >
-                <span style={{ color: "var(--amber)", fontSize: 13 }}>⚠</span>
-                <p className="text-xs font-serif italic" style={{ color: "var(--amber)" }}>
-                  Select an answer on the right to continue.
-                </p>
-              </div>
-            ) : (
-              <button
-                onClick={handleNext}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95"
-                style={{
-                  backgroundColor: "var(--amber)",
-                  color: "#080604",
-                  boxShadow: "0 4px 20px rgba(212,137,10,0.3)",
-                }}
-              >
-                {isLast ? (
-                  <><RotateCcw size={14} />{isCombinedPhase ? "See Final Results" : "See Results"}</>
-                ) : (
-                  <>Next Question <ChevronRight size={14} /></>
-                )}
+          {/* RIGHT — Choices */}
+          <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "var(--ink-4)", textTransform: "uppercase", marginBottom: 2 }}>
+              choose your answer
+            </p>
+
+            {q.choices.map((choice, i) => {
+              let bg = "var(--card)";
+              let border = "var(--border)";
+              let labelBg = "var(--paper)";
+              let labelColor = "var(--ink-3)";
+              let textColor = "var(--ink)";
+
+              if (answered) {
+                if (i === q.correctIndex) { bg = "var(--green-light)"; border = "#86efac"; labelBg = "#bbf7d0"; labelColor = "#16a34a"; textColor = "#15803d"; }
+                else if (i === selected) { bg = "var(--red-light)"; border = "#fca5a5"; labelBg = "#fecdd3"; labelColor = "#dc2626"; textColor = "#b91c1c"; }
+                else { bg = "var(--card)"; border = "var(--border-2)"; textColor = "var(--ink-4)"; }
+              }
+
+              return (
+                <button key={i} onClick={() => pick(i)} disabled={answered}
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 14px",
+                    background: bg, border: `1.5px solid ${border}`,
+                    borderRadius: 3, cursor: answered ? "default" : "pointer", textAlign: "left",
+                    transition: "all .15s",
+                    boxShadow: !answered && i === selected ? "none" : "1px 2px 0 var(--border-2)",
+                  }}
+                  onMouseEnter={(e) => { if (!answered) { e.currentTarget.style.borderColor = "var(--blue)"; e.currentTarget.style.background = "var(--blue-light)"; } }}
+                  onMouseLeave={(e) => { if (!answered) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--card)"; } }}
+                >
+                  <span style={{
+                    width: 28, height: 28, borderRadius: 3, flexShrink: 0,
+                    background: labelBg, color: labelColor,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 13, fontWeight: 700, fontFamily: "var(--font-hand)",
+                    border: `1px solid ${border}`,
+                  }}>
+                    {LABELS[i]}
+                  </span>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: textColor, lineHeight: 1.5, margin: "2px 0 0" }}>{choice}</p>
+                  {answered && i === q.correctIndex && <CheckCircle size={14} style={{ color: "#16a34a", flexShrink: 0, marginTop: 2 }} />}
+                  {answered && i === selected && i !== q.correctIndex && <XCircle size={14} style={{ color: "#dc2626", flexShrink: 0, marginTop: 2 }} />}
+                </button>
+              );
+            })}
+
+            {/* Must answer warning */}
+            {!answered && (
+              <p style={{ fontSize: 12, color: "var(--ink-4)", fontStyle: "italic", marginTop: 4 }}>
+                you must pick an answer to continue
+              </p>
+            )}
+
+            {/* Next — mobile */}
+            {answered && (
+              <button onClick={next} style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "var(--blue)", color: "#fff", border: "none",
+                borderRadius: 4, padding: "11px 20px", fontSize: 15, fontWeight: 700,
+                cursor: "pointer", marginTop: 4, fontFamily: "var(--font-hand)",
+                boxShadow: "3px 4px 0 rgba(37,99,235,0.25)",
+              }}>
+                {isLast ? <><RotateCcw size={14} />{isCombinedPhase ? "final results" : "see results"}</> : <>next question <ChevronRight size={14} /></>}
               </button>
             )}
           </div>
         </div>
 
-        {/* RIGHT — Choices panel */}
-        <div className="lg:w-1/2 flex flex-col gap-3">
-          <p
-            className="text-xs font-semibold uppercase tracking-widest mb-1"
-            style={{ color: "var(--text-faint)" }}
-          >
-            Choose your answer
-          </p>
-
-          {q.choices.map((choice, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSelect(idx)}
-              disabled={isAnswered}
-              className="w-full flex items-start gap-4 p-5 rounded-2xl border text-left transition-all duration-200 disabled:cursor-default group"
-              style={{
-                backgroundColor: choiceBg(idx),
-                borderColor: choiceBorderColor(idx),
-             
-              }}
-              onMouseEnter={(e) => {
-                if (!isAnswered) e.currentTarget.style.borderColor = "rgba(212,137,10,0.4)";
-              }}
-              onMouseLeave={(e) => {
-                if (!isAnswered) e.currentTarget.style.borderColor = "var(--border-warm)";
-              }}
-            >
-              {/* Letter badge */}
-              <span
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all font-serif"
-                style={{
-                  backgroundColor: labelBg(idx),
-                  color: labelColor(idx),
-                  border: `1px solid ${isAnswered && idx === q.correctIndex ? "rgba(74,222,128,0.3)" : isAnswered && idx === selected ? "rgba(248,113,113,0.3)" : "var(--border)"}`,
-                }}
-              >
-                {LABELS[idx]}
-              </span>
-
-              {/* Choice text */}
-              <p
-                className="flex-1 text-sm font-medium leading-relaxed pt-1 font-serif"
-                style={{ color: choiceTextColor(idx) }}
-              >
-                {choice}
-              </p>
-
-              {/* Result icon */}
-              {isAnswered && idx === q.correctIndex && (
-                <CheckCircle size={16} style={{ color: "#4ade80", flexShrink: 0, marginTop: 2 }} />
-              )}
-              {isAnswered && idx === selected && idx !== q.correctIndex && (
-                <XCircle size={16} style={{ color: "#f87171", flexShrink: 0, marginTop: 2 }} />
-              )}
-            </button>
+        {/* Dot progress */}
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 20, justifyContent: "center" }}>
+          {questions.map((_, i) => (
+            <div key={i} style={{
+              width: 7, height: 7, borderRadius: "50%",
+              background: i === idx ? diffColor[difficulty] : answers[i] !== null ? (answers[i] === questions[i].correctIndex ? "#16a34a" : "#dc2626") : "var(--border-2)",
+              transform: i === idx ? "scale(1.5)" : "scale(1)",
+              transition: "all .2s",
+            }} />
           ))}
-
-          {/* Mobile next button */}
-          <div className="lg:hidden mt-2">
-            {!isAnswered ? (
-              <div
-                className="rounded-xl border p-3 flex items-center gap-2"
-                style={{
-                  backgroundColor: "rgba(212,137,10,0.04)",
-                  borderColor: "rgba(212,137,10,0.15)",
-                }}
-              >
-                <span style={{ color: "var(--amber)", fontSize: 13 }}>⚠</span>
-                <p className="text-xs font-serif italic" style={{ color: "var(--amber)" }}>
-                  Choose an answer to continue.
-                </p>
-              </div>
-            ) : (
-              <button
-                onClick={handleNext}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all active:scale-95 mt-1"
-                style={{
-                  backgroundColor: "var(--amber)",
-                  color: "#080604",
-                  boxShadow: "0 4px 20px rgba(212,137,10,0.3)",
-                }}
-              >
-                {isLast ? (
-                  <><RotateCcw size={14} />{isCombinedPhase ? "See Final Results" : "See Results"}</>
-                ) : (
-                  <>Next Question <ChevronRight size={14} /></>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Question dots navigation */}
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {questions.map((_, i) => (
-              <div
-                key={i}
-                className="w-2 h-2 rounded-full transition-all"
-                style={{
-                  backgroundColor:
-                    i === currentIndex
-                      ? "var(--amber)"
-                      : answers[i] !== null
-                      ? answers[i] === questions[i].correctIndex
-                        ? "#4ade80"
-                        : "#f87171"
-                      : "var(--border)",
-                  transform: i === currentIndex ? "scale(1.5)" : "scale(1)",
-                }}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </div>

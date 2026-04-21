@@ -2,656 +2,272 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import {
-  Upload,
-  Brain,
-  Zap,
-  Layers,
-  ChevronRight,
-  FileText,
-  Loader2,
-  Sparkles,
-  BarChart2,
-  Hash,
-  Library,
-  CheckCircle,
-} from "lucide-react";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  Timestamp,
-} from "firebase/firestore";
+import { Upload, Brain, Zap, Layers, ChevronRight, FileText, Loader2, Hash, Library, CheckCircle } from "lucide-react";
+import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type {
-  DifficultyLevel,
-  ReviewMode,
-  Flashcard,
-  MultipleChoiceQuestion,
-  ReviewerFile,
-} from "@/types";
-import type { User } from "@/types";
+import type { DifficultyLevel, ReviewMode, Flashcard, MultipleChoiceQuestion, ReviewerFile, User } from "@/types";
 import { isSupportedFile, getFileExtension, formatDate } from "@/lib/utils";
 import toast from "react-hot-toast";
 
-interface SessionConfigProps {
+interface Props {
   preloadedText?: string;
   preloadedTitle?: string;
-  onStart: (
-    text: string,
-    mode: ReviewMode,
-    difficulty: DifficultyLevel,
-    flashcards?: Flashcard[],
-    questions?: MultipleChoiceQuestion[]
-  ) => void;
+  onStart: (text: string, mode: ReviewMode, difficulty: DifficultyLevel, flashcards?: Flashcard[], questions?: MultipleChoiceQuestion[]) => void;
   user: User | null;
 }
 
-const modes: {
-  id: ReviewMode;
-  label: string;
-  desc: string;
-  icon: React.ElementType;
-  color: string;
-  bg: string;
-}[] = [
-  {
-    id: "flashcard",
-    label: "Flashcards",
-    desc: "Flip cards to test your memory",
-    icon: Brain,
-    color: "text-violet-400",
-    bg: "rgba(124,58,237,0.15)",
-  },
-  {
-    id: "multiple-choice",
-    label: "Quiz",
-    desc: "Answer multiple choice questions",
-    icon: Zap,
-    color: "text-blue-400",
-    bg: "rgba(59,130,246,0.15)",
-  },
-  {
-    id: "combined",
-    label: "Combined",
-    desc: "Flashcards then a quiz",
-    icon: Layers,
-    color: "text-green-400",
-    bg: "rgba(34,197,94,0.15)",
-  },
+const modes = [
+  { id: "flashcard" as ReviewMode, label: "Flashcards", desc: "flip cards, test memory", icon: Brain, color: "#7c3aed", bg: "#ede9fe" },
+  { id: "multiple-choice" as ReviewMode, label: "Quiz", desc: "4-choice questions", icon: Zap, color: "var(--blue)", bg: "var(--blue-light)" },
+  { id: "combined" as ReviewMode, label: "Both", desc: "flashcards then quiz", icon: Layers, color: "var(--green)", bg: "var(--green-light)" },
 ];
 
-const difficulties: {
-  id: DifficultyLevel;
-  label: string;
-  desc: string;
-  color: string;
-  border: string;
-  selectedBg: string;
-}[] = [
-  {
-    id: "easy",
-    label: "Easy",
-    desc: "Basic recall & definitions",
-    color: "text-green-400",
-    border: "rgba(34,197,94,0.4)",
-    selectedBg: "rgba(34,197,94,0.1)",
-  },
-  {
-    id: "medium",
-    label: "Medium",
-    desc: "Concepts & application",
-    color: "text-yellow-400",
-    border: "rgba(234,179,8,0.4)",
-    selectedBg: "rgba(234,179,8,0.1)",
-  },
-  {
-    id: "hard",
-    label: "Hard",
-    desc: "Deep analysis & synthesis",
-    color: "text-red-400",
-    border: "rgba(239,68,68,0.4)",
-    selectedBg: "rgba(239,68,68,0.1)",
-  },
+const diffs = [
+  { id: "easy" as DifficultyLevel, label: "Easy", desc: "definitions & recall", color: "var(--green)", bg: "var(--green-light)", border: "#86efac" },
+  { id: "medium" as DifficultyLevel, label: "Medium", desc: "concepts & application", color: "#d97706", bg: "#fef9c3", border: "#fde047" },
+  { id: "hard" as DifficultyLevel, label: "Hard", desc: "analysis & synthesis", color: "var(--red)", bg: "var(--red-light)", border: "#fca5a5" },
 ];
 
-export default function SessionConfig({
-  preloadedText,
-  preloadedTitle,
-  onStart,
-  user,
-}: SessionConfigProps) {
-  const [extractedText, setExtractedText] = useState(preloadedText ?? "");
+export default function SessionConfig({ preloadedText, preloadedTitle, onStart, user }: Props) {
+  const [text, setText] = useState(preloadedText ?? "");
   const [fileName, setFileName] = useState(preloadedTitle ?? "");
   const [mode, setMode] = useState<ReviewMode>("flashcard");
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium");
-  const [itemCount, setItemCount] = useState(10);
+  const [diff, setDiff] = useState<DifficultyLevel>("medium");
+  const [count, setCount] = useState(10);
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState("");
-
-  // Library tab
-  const [uploadTab, setUploadTab] = useState<"upload" | "library">("upload");
+  const [uploadMsg, setUploadMsg] = useState("");
+  const [tab, setTab] = useState<"upload" | "library">("upload");
   const [savedFiles, setSavedFiles] = useState<ReviewerFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const hasText = extractedText.trim().length > 50;
+  const hasText = text.trim().length > 50;
 
-  // Load saved files when switching to library tab
   useEffect(() => {
-    if (uploadTab !== "library" || !user || savedFiles.length > 0) return;
+    if (tab !== "library" || !user || savedFiles.length > 0) return;
     setLoadingFiles(true);
-    getDocs(
-      query(
-        collection(db, "reviewerFiles"),
-        where("userId", "==", user.uid),
-        orderBy("createdAt", "desc")
-      )
-    )
-      .then((snap) => {
-        const files = snap.docs.map((d) => {
-          const raw = d.data();
-          return {
-            ...raw,
-            id: d.id,
-            createdAt:
-              raw.createdAt instanceof Timestamp
-                ? raw.createdAt.toDate()
-                : new Date(),
-          } as ReviewerFile;
-        });
-        setSavedFiles(files);
-      })
+    getDocs(query(collection(db, "reviewerFiles"), where("userId", "==", user.uid), orderBy("createdAt", "desc")))
+      .then((snap) => setSavedFiles(snap.docs.map((d) => {
+        const raw = d.data();
+        return { ...raw, id: d.id, createdAt: raw.createdAt instanceof Timestamp ? raw.createdAt.toDate() : new Date() } as ReviewerFile;
+      })))
       .catch(console.error)
       .finally(() => setLoadingFiles(false));
-  }, [uploadTab, user, savedFiles.length]);
+  }, [tab, user, savedFiles.length]);
 
-  function selectSavedFile(file: ReviewerFile) {
-    setSelectedFileId(file.id);
-    setExtractedText(file.extractedText);
-    setFileName(file.fileName);
-    toast.success(`"${file.fileName}" loaded!`);
-  }
+  const handleDrop = useCallback(async (files: File[]) => {
+    const file = files[0];
+    if (!file) return;
+    if (!isSupportedFile(file.name)) { toast.error("Unsupported file type."); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB."); return; }
+    setUploading(true); setUploadMsg("uploading...");
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const up = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!up.ok) throw new Error("Upload failed");
+      const { url } = await up.json();
+      setUploadMsg("extracting text...");
+      const ex = await fetch("/api/extract", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, fileType: getFileExtension(file.name), fileName: file.name }) });
+      if (!ex.ok) { const e = await ex.json(); throw new Error(e.error ?? "Extraction failed"); }
+      const { extractedText } = await ex.json();
+      setText(extractedText); setFileName(file.name); setSelectedId(null);
+      toast.success("File processed!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed.");
+    } finally { setUploading(false); setUploadMsg(""); }
+  }, []);
 
-  const handleDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
-      if (!isSupportedFile(file.name)) {
-        toast.error(`Unsupported file type.`);
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File too large. Max 10MB.");
-        return;
-      }
-
-      setUploading(true);
-      setUploadProgress("Uploading to cloud...");
-
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-        if (!uploadRes.ok) throw new Error("Upload failed");
-        const { url } = await uploadRes.json();
-
-        setUploadProgress("Extracting text...");
-
-        const ext = getFileExtension(file.name);
-        const extractRes = await fetch("/api/extract", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, fileType: ext, fileName: file.name }),
-        });
-        if (!extractRes.ok) {
-          const err = await extractRes.json();
-          throw new Error(err.error ?? "Extraction failed");
-        }
-        const { extractedText: text, needsClientExtraction } =
-          await extractRes.json();
-
-        if (needsClientExtraction) {
-          const mammoth = await import("mammoth");
-          const arrayBuffer = await file.arrayBuffer();
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          setExtractedText(result.value);
-        } else {
-          setExtractedText(text);
-        }
-
-        setFileName(file.name);
-        setSelectedFileId(null);
-        toast.success("File processed!");
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to process file.";
-        toast.error(msg);
-      } finally {
-        setUploading(false);
-        setUploadProgress("");
-      }
-    },
-    []
-  );
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: handleDrop,
-    multiple: false,
-    disabled: uploading || generating,
-  });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop: handleDrop, multiple: false, disabled: uploading || generating });
 
   async function handleGenerate() {
-    if (!hasText) {
-      toast.error("Please upload a file or select one from your library first.");
-      return;
-    }
-
+    if (!hasText) { toast.error("Upload a file first."); return; }
     setGenerating(true);
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ extractedText, mode, difficulty, itemCount }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "Generation failed");
-      }
-
+      const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ extractedText: text, mode, difficulty: diff, itemCount: count }) });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
       const data = await res.json();
-
-      // Validate the response
-      if (mode === "multiple-choice" && (!data.questions || data.questions.length === 0)) {
-        throw new Error("No questions were generated. Please try again.");
-      }
-      if (mode === "flashcard" && (!data.flashcards || data.flashcards.length === 0)) {
-        throw new Error("No flashcards were generated. Please try again.");
-      }
-
-      onStart(extractedText, mode, difficulty, data.flashcards, data.questions);
+      if (mode === "multiple-choice" && !data.questions?.length) throw new Error("No questions generated. Try again.");
+      if (mode === "flashcard" && !data.flashcards?.length) throw new Error("No flashcards generated. Try again.");
+      onStart(text, mode, diff, data.flashcards, data.questions);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Generation failed";
-      toast.error(message);
-    } finally {
-      setGenerating(false);
-    }
+      toast.error(err instanceof Error ? err.message : "Failed.");
+    } finally { setGenerating(false); }
   }
 
+  const label = (s: string, n?: number) => (
+    <span className="hand" style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: n ? 8 : 0 }}>
+      {n && <span style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--blue)", color: "#fff", fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{n}</span>}
+      {s}
+    </span>
+  );
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-8">
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 16px", display: "flex", flexDirection: "column", gap: 16 }}>
+
       {/* Header */}
-      <div className="text-center">
-        <div
-          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-4 border"
-          style={{
-            backgroundColor: "rgba(124,58,237,0.1)",
-            borderColor: "rgba(124,58,237,0.2)",
-          }}
-        >
-          <Sparkles className="w-4 h-4 text-violet-400" />
-          <span className="text-violet-300 text-sm font-medium">
-            AI-Powered Review Session
-          </span>
-        </div>
-        <h1 className="text-3xl font-bold text-white mb-2">Set Up Your Review</h1>
-        <p className="text-slate-400 text-sm">
-          Upload your material and configure how you want to study.
-          {!user && (
-            <span className="text-violet-400"> Sign in to save progress.</span>
-          )}
+      <div style={{ textAlign: "center", marginBottom: 8 }}>
+        <h1 className="hand" style={{ fontSize: 30, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>
+          set up your review
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--ink-3)" }}>
+          upload your material and pick how you want to study
+          {!user && <> · <a href="/login" style={{ color: "var(--blue)" }}>sign in</a> to save progress</>}
         </p>
       </div>
 
-      {/* Step 1 — Upload / Library */}
-      <div
-        className="rounded-2xl border p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-              style={{ backgroundColor: "var(--accent)" }}
-            >
-              1
-            </div>
-            <h2 className="text-white font-semibold">Upload Reviewer File</h2>
-          </div>
-
-          {/* Tab switcher — only show if user is logged in and has files */}
+      {/* Step 1 — Upload */}
+      <div className="ruled" style={{ border: "1px solid var(--border)", borderLeft: "3px solid var(--rule-red)", borderRadius: 3, padding: "20px 24px", background: "var(--card)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          {label("upload your file", 1)}
           {user && (
-            <div
-              className="flex rounded-lg overflow-hidden border text-xs"
-              style={{ borderColor: "var(--border)" }}
-            >
-              <button
-                onClick={() => setUploadTab("upload")}
-                className={`px-3 py-1.5 font-medium transition-colors flex items-center gap-1.5 ${
-                  uploadTab === "upload"
-                    ? "bg-violet-600 text-white"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Upload size={12} />
-                Upload New
-              </button>
-              <button
-                onClick={() => setUploadTab("library")}
-                className={`px-3 py-1.5 font-medium transition-colors flex items-center gap-1.5 ${
-                  uploadTab === "library"
-                    ? "bg-violet-600 text-white"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Library size={12} />
-                My Library
-              </button>
+            <div style={{ display: "flex", border: "1.5px solid var(--border)", borderRadius: 4, overflow: "hidden" }}>
+              {(["upload", "library"] as const).map((t) => (
+                <button key={t} onClick={() => setTab(t)} style={{
+                  padding: "4px 12px", fontSize: 12, fontWeight: 600,
+                  background: tab === t ? "var(--blue)" : "transparent",
+                  color: tab === t ? "#fff" : "var(--ink-3)",
+                  border: "none", cursor: "pointer", fontFamily: "var(--font-hand)",
+                }}>
+                  {t === "upload" ? "upload new" : "my library"}
+                </button>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Active file indicator */}
-        {hasText && (
-          <div
-            className="flex items-center gap-3 p-3 rounded-xl border"
-            style={{
-              backgroundColor: "rgba(34,197,94,0.05)",
-              borderColor: "rgba(34,197,94,0.2)",
-            }}
-          >
-            <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">
-                {fileName || "File loaded"}
-              </p>
-              <p className="text-green-400 text-xs">
-                ✓ {extractedText.length.toLocaleString()} characters ready
-              </p>
+        {hasText ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--green-light)", border: "1px solid #86efac", borderRadius: 4 }}>
+            <CheckCircle size={15} style={{ color: "var(--green)", flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", margin: 0 }}>{fileName || "File loaded"}</p>
+              <p style={{ fontSize: 11, color: "var(--green)", margin: 0 }}>{text.length.toLocaleString()} characters extracted</p>
             </div>
-            <button
-              onClick={() => {
-                setExtractedText("");
-                setFileName("");
-                setSelectedFileId(null);
-              }}
-              className="text-slate-500 hover:text-red-400 transition-colors text-xs"
-            >
-              Clear
-            </button>
+            <button onClick={() => { setText(""); setFileName(""); setSelectedId(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--red)" }}>clear</button>
           </div>
-        )}
-
-        {/* Upload Tab */}
-        {uploadTab === "upload" && !hasText && (
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200
-              ${
-                isDragActive
-                  ? "border-violet-500 bg-violet-500/10"
-                  : uploading
-                  ? "border-violet-500/50 bg-violet-500/5 cursor-not-allowed"
-                  : "border-white/10 hover:border-violet-500/50 hover:bg-white/5"
-              }`}
-          >
+        ) : tab === "upload" ? (
+          <div {...getRootProps()} style={{
+            border: `2px dashed ${isDragActive ? "var(--blue)" : "var(--border)"}`,
+            borderRadius: 4, padding: "28px", textAlign: "center", cursor: uploading ? "not-allowed" : "pointer",
+            background: isDragActive ? "var(--blue-dim)" : "rgba(255,255,255,0.5)", transition: "all .15s",
+          }}>
             <input {...getInputProps()} />
             {uploading ? (
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="text-violet-400 w-8 h-8 animate-spin" />
-                <p className="text-violet-300 font-medium">{uploadProgress}</p>
-                <p className="text-slate-500 text-xs">This may take a moment...</p>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <Loader2 size={24} style={{ color: "var(--blue)" }} className="animate-spin" />
+                <p className="hand" style={{ fontSize: 15, color: "var(--blue)" }}>{uploadMsg}</p>
               </div>
             ) : (
               <>
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
-                  style={{ backgroundColor: "rgba(124,58,237,0.15)" }}
-                >
-                  <Upload className="text-violet-400 w-6 h-6" />
-                </div>
-                <p className="text-white font-semibold mb-1">
-                  {isDragActive ? "Drop it here!" : "Drag & drop your file"}
+                <Upload size={22} style={{ color: "var(--ink-4)", margin: "0 auto 8px" }} />
+                <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-2)", marginBottom: 4 }}>
+                  {isDragActive ? "drop it!" : "drag & drop or click to browse"}
                 </p>
-                <p className="text-slate-400 text-sm mb-2">or click to browse</p>
-                <p className="text-slate-500 text-xs">
-                  PDF, PPTX, DOCX, XLSX, PNG, JPG, HEIC, TXT • Max 10MB
-                </p>
+                <p style={{ fontSize: 11, color: "var(--ink-4)" }}>PDF · PPTX · DOCX · XLSX · PNG · JPG · HEIC · TXT · max 10MB</p>
               </>
             )}
           </div>
-        )}
-
-        {/* Library Tab */}
-        {uploadTab === "library" && !hasText && (
-          <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+        ) : (
+          <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
             {loadingFiles ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="animate-spin text-violet-400 w-6 h-6" />
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "20px 0", color: "var(--ink-4)" }}>
+                <Loader2 size={16} className="animate-spin" /> loading...
               </div>
             ) : savedFiles.length === 0 ? (
-              <div className="text-center py-8">
-                <Library className="text-slate-600 w-10 h-10 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm">No saved files yet.</p>
-                <button
-                  onClick={() => setUploadTab("upload")}
-                  className="text-violet-400 text-xs mt-1 hover:underline"
-                >
-                  Upload a file first →
-                </button>
-              </div>
-            ) : (
-              savedFiles.map((file) => (
-                <button
-                  key={file.id}
-                  onClick={() => selectSavedFile(file)}
-                  className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:border-violet-500/40 ${
-                    selectedFileId === file.id ? "border-violet-500/60" : ""
-                  }`}
-                  style={{
-                    backgroundColor:
-                      selectedFileId === file.id
-                        ? "rgba(124,58,237,0.1)"
-                        : "rgba(255,255,255,0.03)",
-                    borderColor:
-                      selectedFileId === file.id
-                        ? "rgba(124,58,237,0.4)"
-                        : "var(--border)",
-                  }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "rgba(124,58,237,0.15)" }}
-                  >
-                    <FileText size={16} className="text-violet-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">
-                      {file.fileName}
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      {file.extractedText.length.toLocaleString()} chars •{" "}
-                      {formatDate(file.createdAt)}
-                    </p>
-                  </div>
-                  {selectedFileId === file.id && (
-                    <CheckCircle size={16} className="text-violet-400 flex-shrink-0" />
-                  )}
-                </button>
-              ))
-            )}
+              <p style={{ fontSize: 13, color: "var(--ink-4)", padding: "20px 0" }}>no files yet — <button onClick={() => setTab("upload")} style={{ background: "none", border: "none", color: "var(--blue)", cursor: "pointer", fontWeight: 600, padding: 0, fontSize: 13 }}>upload one</button></p>
+            ) : savedFiles.map((f) => (
+              <button key={f.id} onClick={() => { setSelectedId(f.id); setText(f.extractedText); setFileName(f.fileName); toast.success(`"${f.fileName}" loaded!`); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                  background: selectedId === f.id ? "var(--blue-light)" : "var(--card-2)",
+                  border: `1.5px solid ${selectedId === f.id ? "var(--blue)" : "var(--border)"}`,
+                  borderRadius: 4, cursor: "pointer", textAlign: "left",
+                }}>
+                <FileText size={14} style={{ color: "var(--blue)", flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.fileName}</p>
+                  <p style={{ fontSize: 11, color: "var(--ink-4)", margin: 0 }}>{formatDate(f.createdAt)}</p>
+                </div>
+                {selectedId === f.id && <CheckCircle size={14} style={{ color: "var(--blue)" }} />}
+              </button>
+            ))}
           </div>
         )}
       </div>
 
       {/* Step 2 — Mode */}
-      <div
-        className="rounded-2xl border p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: "var(--accent)" }}
-          >
-            2
-          </div>
-          <h2 className="text-white font-semibold">Choose Review Mode</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="ruled" style={{ border: "1px solid var(--border)", borderLeft: "3px solid var(--rule-red)", borderRadius: 3, padding: "20px 24px", background: "var(--card)" }}>
+        {label("choose mode", 2)}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 12 }}>
           {modes.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setMode(m.id)}
-              className="flex flex-col items-start gap-2 p-4 rounded-xl border transition-all duration-200 text-left"
-              style={{
-                backgroundColor: mode === m.id ? m.bg : "rgba(255,255,255,0.03)",
-                borderColor: mode === m.id ? "currentColor" : "var(--border)",
-              }}
-            >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: m.bg }}
-              >
-                <m.icon className={`${m.color} w-5 h-5`} />
+            <button key={m.id} onClick={() => setMode(m.id)} style={{
+              padding: "12px 8px", borderRadius: 4, cursor: "pointer",
+              border: `2px solid ${mode === m.id ? m.color : "var(--border)"}`,
+              background: mode === m.id ? m.bg : "var(--card)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+              transition: "all .15s",
+            }}>
+              <div style={{ width: 30, height: 30, borderRadius: 4, background: m.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <m.icon size={16} style={{ color: m.color }} />
               </div>
-              <div>
-                <p
-                  className={`font-semibold text-sm ${
-                    mode === m.id ? "text-white" : "text-slate-300"
-                  }`}
-                >
-                  {m.label}
-                </p>
-                <p className="text-slate-500 text-xs mt-0.5">{m.desc}</p>
-              </div>
+              <span className="hand" style={{ fontSize: 14, fontWeight: 700, color: mode === m.id ? m.color : "var(--ink-2)" }}>{m.label}</span>
+              <span style={{ fontSize: 11, color: "var(--ink-4)", textAlign: "center", lineHeight: 1.3 }}>{m.desc}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Step 3 — Difficulty */}
-      <div
-        className="rounded-2xl border p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: "var(--accent)" }}
-          >
-            3
-          </div>
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <BarChart2 size={16} className="text-slate-400" />
-            Difficulty Level
-          </h2>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {difficulties.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => setDifficulty(d.id)}
-              className="flex flex-col gap-1 p-3 rounded-xl border transition-all duration-200 text-left"
-              style={{
-                backgroundColor:
-                  difficulty === d.id ? d.selectedBg : "rgba(255,255,255,0.03)",
-                borderColor: difficulty === d.id ? d.border : "var(--border)",
-              }}
-            >
-              <p
-                className={`font-semibold text-sm ${
-                  difficulty === d.id ? d.color : "text-slate-400"
-                }`}
-              >
-                {d.label}
-              </p>
-              <p className="text-slate-500 text-xs leading-snug">{d.desc}</p>
+      <div className="ruled" style={{ border: "1px solid var(--border)", borderLeft: "3px solid var(--rule-red)", borderRadius: 3, padding: "20px 24px", background: "var(--card)" }}>
+        {label("difficulty", 3)}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 12 }}>
+          {diffs.map((d) => (
+            <button key={d.id} onClick={() => setDiff(d.id)} style={{
+              padding: "10px 8px", borderRadius: 4, cursor: "pointer",
+              border: `2px solid ${diff === d.id ? d.border : "var(--border)"}`,
+              background: diff === d.id ? d.bg : "var(--card)",
+              transition: "all .15s",
+            }}>
+              <div className="hand" style={{ fontSize: 15, fontWeight: 700, color: diff === d.id ? d.color : "var(--ink-2)", marginBottom: 2 }}>{d.label}</div>
+              <div style={{ fontSize: 11, color: "var(--ink-4)" }}>{d.desc}</div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Step 4 — Item Count */}
-      <div
-        className="rounded-2xl border p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: "var(--accent)" }}
-          >
-            4
-          </div>
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <Hash size={16} className="text-slate-400" />
-            Number of Items
-          </h2>
-        </div>
-        <div className="flex items-center gap-4">
-          <input
-            type="range"
-            min={5}
-            max={30}
-            step={5}
-            value={itemCount}
-            onChange={(e) => setItemCount(Number(e.target.value))}
-            className="flex-1 accent-violet-500"
-          />
-          <div
-            className="w-16 h-10 rounded-xl flex items-center justify-center font-bold text-white text-lg"
-            style={{ backgroundColor: "rgba(124,58,237,0.2)" }}
-          >
-            {itemCount}
+      {/* Step 4 — Count */}
+      <div className="ruled" style={{ border: "1px solid var(--border)", borderLeft: "3px solid var(--rule-red)", borderRadius: 3, padding: "20px 24px", background: "var(--card)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {label("how many items?", 4)}
+          <div style={{
+            width: 44, height: 36, borderRadius: 4, background: "var(--blue-light)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span className="hand" style={{ fontSize: 20, fontWeight: 700, color: "var(--blue)" }}>{count}</span>
           </div>
         </div>
-        <p className="text-slate-500 text-xs">
-          {mode === "combined"
-            ? `${Math.ceil(itemCount / 2)} flashcards + ${Math.floor(itemCount / 2)} quiz questions`
-            : `${itemCount} ${mode === "flashcard" ? "flashcards" : "questions"} will be generated`}
+        <input type="range" min={5} max={30} step={5} value={count} onChange={(e) => setCount(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "var(--blue)", marginTop: 12 }} />
+        <p style={{ fontSize: 11, color: "var(--ink-4)", marginTop: 4 }}>
+          {mode === "combined" ? `${Math.ceil(count / 2)} flashcards + ${Math.floor(count / 2)} questions` : `${count} ${mode === "flashcard" ? "flashcards" : "questions"}`}
         </p>
       </div>
 
-      {/* Generate Button */}
-      <button
-        onClick={handleGenerate}
-        disabled={!hasText || generating || uploading}
-        className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-white text-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+      {/* Generate */}
+      <button onClick={handleGenerate} disabled={!hasText || generating || uploading}
         style={{
-          background:
-            hasText && !generating
-              ? "linear-gradient(135deg, #7c3aed, #a855f7)"
-              : "rgba(124,58,237,0.3)",
-          boxShadow:
-            hasText && !generating ? "0 4px 24px rgba(124,58,237,0.4)" : "none",
-        }}
-      >
-        {generating ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            Generating your reviewer...
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-5 h-5" />
-            Generate & Start Reviewing
-            <ChevronRight className="w-5 h-5" />
-          </>
-        )}
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "14px", borderRadius: 4, fontSize: 16, fontWeight: 700,
+          background: hasText ? "var(--blue)" : "var(--border)",
+          color: hasText ? "#fff" : "var(--ink-4)",
+          border: "none", cursor: hasText ? "pointer" : "not-allowed",
+          fontFamily: "var(--font-hand)", letterSpacing: "0.01em",
+          transition: "all .15s",
+          boxShadow: hasText ? "3px 4px 0 rgba(37,99,235,0.3)" : "none",
+        }}>
+        {generating ? <><Loader2 size={18} className="animate-spin" /> generating — hang tight...</> : <>generate & start studying <ChevronRight size={18} /></>}
       </button>
-
-      {generating && (
-        <p className="text-center text-slate-500 text-sm -mt-4">
-          AI is analyzing your material. This takes 5–15 seconds...
-        </p>
-      )}
+      {generating && <p style={{ textAlign: "center", fontSize: 12, color: "var(--ink-4)", marginTop: -8 }}>AI is reading your material — 5–15 seconds...</p>}
     </div>
   );
 }
