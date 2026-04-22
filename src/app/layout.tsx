@@ -8,7 +8,7 @@ import { Toaster } from "react-hot-toast";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "ReviewAI — Study smarter",
+  title: "RevYouw — Study smarter",
   description: "Upload your notes. Generate flashcards and quizzes. Pass that exam.",
 };
 
