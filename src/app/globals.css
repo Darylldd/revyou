@@ -52,25 +52,25 @@
 [data-theme="hello-kitty"] {
   --paper:      #fff0f5;
   --paper-2:    #fce4ee;
-  --card:       #fff5f8;
-  --card-2:     #ffeef4;
+  --card:       #ffffff;
+  --card-2:     #fff5f8;
 
-  --ink:        #3d1a2e;
-  --ink-2:      #6b3553;
-  --ink-3:      #a06080;
-  --ink-4:      #d4a0b8;
+  --ink:        #3d0a1e;
+  --ink-2:      #6b1a3a;
+  --ink-3:      #b06080;
+  --ink-4:      #dda0b8;
   --ink-5:      #f4d0e0;
 
   --rule:       #ffd6e7;
-  --rule-red:   #ff85b3;
-  --border:     #f4b8d0;
+  --rule-red:   #ff69b4;
+  --border:     #f4a8c8;
   --border-2:   #f8cfe0;
 
   --blue:       #e91e8c;
   --blue-2:     #c2185b;
   --blue-light: #fce7f3;
   --blue-dim:   rgba(233,30,140,0.1);
-  --btn-shadow: rgba(233,30,140,0.28);
+  --btn-shadow: rgba(233,30,140,0.35);
 
   --red:        #e91e8c;
   --red-light:  #fce7f3;
@@ -78,17 +78,17 @@
   --green-light:#fce7f3;
   --yellow:     #f06292;
 
-  --hi-yellow:  rgba(255,182,193,0.6);
-  --hi-pink:    rgba(244,114,182,0.4);
-  --hi-blue:    rgba(249,168,212,0.45);
+  --hi-yellow:  rgba(255,182,193,0.65);
+  --hi-pink:    rgba(244,114,182,0.5);
+  --hi-blue:    rgba(249,168,212,0.5);
 
   --sticky-y:   #fff0f5;
   --sticky-p:   #fce7f3;
   --sticky-b:   #fce7f3;
   --sticky-g:   #fce7f3;
-  --tape:       #ffc0cb;
+  --tape:       #ffb6c1;
 
-  --radius-btn: 12px;
+  --radius-btn: 20px;
   --font-btn:   var(--font-hand);
   --font-btn-size: 15px;
 }
@@ -260,11 +260,29 @@ body {
 
 [data-theme="hello-kitty"] .ruled {
   background: repeating-linear-gradient(
-    var(--card),
-    var(--card) 27px,
-    var(--rule) 27px,
-    var(--rule) 28px
+    #ffffff,
+    #ffffff 27px,
+    #ffd6e7 27px,
+    #ffd6e7 28px
   );
+}
+[data-theme="hello-kitty"] body {
+  background-color: #fff0f5;
+  background-image:
+    radial-gradient(circle, #e91e8c 1.5px, transparent 1.5px),
+    radial-gradient(circle, #e91e8c 1.5px, transparent 1.5px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+[data-theme="hello-kitty"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M20 30 C20 30 6 22 6 13 C6 8 10 5 14 6 C16 7 18 9 20 12 C22 9 24 7 26 6 C30 5 34 8 34 13 C34 22 20 30 20 30Z' fill='%23e91e8c' opacity='0.18'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
 }
 
 .margined { border-left: 2px solid var(--rule-red); padding-left: 16px; }
@@ -276,7 +294,11 @@ body {
   font-family: var(--font-sans);
 }
 
-/* ── Buttons — ink sticker style ─────────────────────── */
+/* ── Pinned paper button ──────────────────────────────── */
+/*
+  Looks like a small piece of paper pinned with a thumbtack.
+  The ::before is the thumbtack head sitting on top.
+*/
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -284,22 +306,57 @@ body {
   background: var(--blue);
   color: #fff;
   border: none;
-  padding: 7px 16px;
+  padding: 8px 16px;
+  padding-top: 12px;
   border-radius: var(--radius-btn);
   font-family: var(--font-btn);
   font-size: var(--font-btn-size);
   font-weight: 700;
   cursor: pointer;
   text-decoration: none;
-  box-shadow: 2px 3px 0 var(--btn-shadow);
-  transform: rotate(-0.3deg);
-  transition: transform 0.1s, box-shadow 0.1s;
   position: relative;
+
+  /* Paper shadow — bottom-right offset */
+  box-shadow: 2px 3px 0 var(--btn-shadow), 0 0 0 1.5px rgba(255,255,255,0.15) inset;
+
+  /* Slight tilt like pinned paper */
+  transform: rotate(-0.4deg);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+/* Thumbtack head */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d4a017;
+  border: 2px solid #b8860b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  z-index: 1;
+}
+
+/* Thumbtack pin (vertical line) */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 6px;
+  background: #888;
+  border-radius: 0 0 1px 1px;
+  z-index: 0;
 }
 
 .btn-primary:hover {
-  transform: rotate(0deg) translateY(-1px);
-  box-shadow: 3px 4px 0 var(--btn-shadow);
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: 3px 5px 0 var(--btn-shadow), 0 0 0 1.5px rgba(255,255,255,0.15) inset;
 }
 
 .btn-primary:active {
@@ -307,36 +364,78 @@ body {
   box-shadow: 1px 1px 0 var(--btn-shadow);
 }
 
-/* Hello kitty — round pill */
+/* Hello Kitty — round pill, pink pin */
 [data-theme="hello-kitty"] .btn-primary {
-  border-radius: 14px;
+  border-radius: 24px;
   transform: none;
+  box-shadow: 0 3px 0 var(--btn-shadow), 0 0 0 2px #fff inset;
+  padding-top: 8px;
+  background: linear-gradient(135deg, #e91e8c, #f06292);
+  border: none;
 }
+[data-theme="hello-kitty"] .btn-primary::before {
+  /* Heart pin instead of circle thumbtack */
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 12px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 12'%3E%3Cpath d='M7 11 C7 11 1 7 1 4 C1 2 2.5 1 4 1.5 C5 2 6 3 7 4.5 C8 3 9 2 10 1.5 C11.5 1 13 2 13 4 C13 7 7 11 7 11Z' fill='%23c2185b'/%3E%3C/svg%3E") center/contain no-repeat;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+[data-theme="hello-kitty"] .btn-primary::after { display: none; }
 
-/* Plain — square, no shadow */
+[data-theme="hello-kitty"] .btn-secondary {
+  border-radius: 20px;
+  border-color: #f4a8c8;
+  box-shadow: 0 2px 0 #f8cfe0;
+}
+[data-theme="hello-kitty"] a[style*="border-bottom"] {
+  border-bottom-color: #e91e8c !important;
+}
+[data-theme="hello-kitty"] a[style*="border-bottom"] {
+  border-bottom-color: #e91e8c !important;
+}
+/* Plain — no pin, no shadow, square */
 [data-theme="plain"] .btn-primary {
   box-shadow: none;
   transform: none;
   border-radius: 0;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 11px;
   font-weight: 600;
+  padding-top: 8px;
 }
+[data-theme="plain"] .btn-primary::before,
+[data-theme="plain"] .btn-primary::after { display: none; }
 
-/* Readable — standard rounded */
+/* Readable — clean, no pin */
 [data-theme="readable"] .btn-primary {
   transform: none;
   border-radius: 6px;
   box-shadow: 0 1px 3px var(--btn-shadow);
+  padding-top: 8px;
 }
+[data-theme="readable"] .btn-primary::before,
+[data-theme="readable"] .btn-primary::after { display: none; }
 
-/* Dark — glow effect */
+/* Dark — glow, no pin tilt */
 [data-theme="dark"] .btn-primary {
   transform: none;
   border-radius: 5px;
-  box-shadow: 0 0 10px rgba(129,140,248,0.3), 2px 3px 0 rgba(129,140,248,0.2);
+  box-shadow: 0 0 12px rgba(129,140,248,0.3), 2px 3px 0 rgba(129,140,248,0.2);
+  padding-top: 8px;
 }
+[data-theme="dark"] .btn-primary::before {
+  background: #a78bfa;
+  border-color: #818cf8;
+}
+[data-theme="dark"] .btn-primary::after { background: #6366f1; }
 
 .btn-secondary {
   display: inline-flex;
@@ -345,7 +444,7 @@ body {
   background: var(--card);
   color: var(--ink-2);
   border: 1.5px solid var(--border);
-  padding: 6px 14px;
+  padding: 7px 14px;
   border-radius: var(--radius-btn);
   font-family: var(--font-btn);
   font-size: var(--font-btn-size);
@@ -359,6 +458,7 @@ body {
 .btn-secondary:hover { background: var(--paper); }
 [data-theme="plain"] .btn-secondary { box-shadow: none; border-radius: 0; }
 [data-theme="readable"] .btn-secondary { box-shadow: none; border-radius: 6px; }
+[data-theme="dark"] .btn-secondary { box-shadow: none; }
 
 /* ── Highlighter utilities ────────────────────────────── */
 .hi-y { background: linear-gradient(transparent 55%, var(--hi-yellow) 55%); }

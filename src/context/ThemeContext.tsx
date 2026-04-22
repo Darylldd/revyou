@@ -5,11 +5,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 export type Theme = "paper" | "hello-kitty" | "readable" | "dark" | "plain";
 
 const THEMES: { id: Theme; label: string; emoji: string }[] = [
-  { id: "paper",       label: "Paper",       emoji: "📋" },
-  { id: "hello-kitty", label: "Hello Kitty", emoji: "🎀" },
-  { id: "readable",    label: "Readable",    emoji: "📖" },
-  { id: "dark",        label: "Dark",        emoji: "🌙" },
-  { id: "plain",       label: "Plain",       emoji: "⬜" },
+  { id: "paper",       label: "Paper",       emoji: "" },
+  { id: "hello-kitty", label: "Hello Kitty", emoji: "" },
+  { id: "readable",    label: "Readable",    emoji: "" },
+  { id: "dark",        label: "Dark",        emoji: "" },
+  { id: "plain",       label: "Plain",       emoji: "" },
 ];
 
 interface ThemeCtx { theme: Theme; setTheme: (t: Theme) => void; themes: typeof THEMES; }

@@ -17,7 +17,7 @@ export default function UploadPage() {
   }
 
   return (
-    <div style={{ maxWidth: 640 }}>
+   <div style={{ maxWidth: 640, margin: "0 auto" }}>
       <Link href="/dashboard" style={{
         display: "inline-flex", alignItems: "center", gap: 5,
         fontSize: 13, color: "var(--ink-3)", textDecoration: "none", marginBottom: 20,

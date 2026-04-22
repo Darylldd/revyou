@@ -39,7 +39,7 @@ export default function DashboardPage() {
       {/* Greeting */}
       <div style={{ marginBottom: 20 }}>
         <h1 className="hand" style={{ fontSize: 28, fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>
-          hey {user?.displayName?.split(" ")[0] ?? "there"} 👋
+          hey {user?.displayName?.split(" ")[0] ?? "there"} 
         </h1>
         <p style={{ fontSize: 13, color: "var(--ink-3)" }}>
           {reviewers.length} reviewer{reviewers.length !== 1 ? "s" : ""} · {files.length} file{files.length !== 1 ? "s" : ""} saved

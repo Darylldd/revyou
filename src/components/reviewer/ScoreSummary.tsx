@@ -97,10 +97,10 @@ export default function ScoreSummary({ result, reviewerTitle, onRestart, user }:
           boxShadow: "2px 3px 0 #e6d640",
         }}>
           <p className="hand" style={{ fontSize: 15, color: "var(--ink-2)" }}>
-            {pct >= 90 ? "📌 perfect score! well earned break coming up."
-              : pct >= 75 ? "📌 almost perfect — quick review of missed items."
-              : pct >= 60 ? "📌 decent start. another round will lock it in."
-              : "📌 don't worry — study, sleep, repeat."}
+            {pct >= 90 ? "Perfect score! Well earned break."
+  : pct >= 75 ? "Almost perfect. Review the ones you missed."
+  : pct >= 60 ? "Decent start. One more round will lock it in."
+  : "Don't worry! Study, sleep, repeat."}
           </p>
         </div>
 

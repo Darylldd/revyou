@@ -1,19 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { X, GitMerge, CheckSquare, Square, Loader2 } from "lucide-react";
+import { X, GitMerge, Loader2 } from "lucide-react";
 import { useReviewers } from "@/hooks/useReviewers";
 import type { ReviewerFile } from "@/types";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-interface CombineModalProps {
-  open: boolean;
-  onClose: () => void;
-  files: ReviewerFile[];
-}
+interface Props { open: boolean; onClose: () => void; files: ReviewerFile[]; }
 
-export default function CombineModal({ open, onClose, files }: CombineModalProps) {
+export default function CombineModal({ open, onClose, files }: Props) {
   const router = useRouter();
   const { createReviewer } = useReviewers();
   const [title, setTitle] = useState("");
@@ -23,159 +19,155 @@ export default function CombineModal({ open, onClose, files }: CombineModalProps
 
   if (!open) return null;
 
-  function toggleFile(id: string) {
+  function toggle(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
   async function handleCombine() {
-    if (!title.trim()) {
-      toast.error("Please enter a title.");
-      return;
-    }
-    if (selectedIds.size < 1) {
-      toast.error("Select at least one file.");
-      return;
-    }
-
+    if (!title.trim()) { toast.error("Enter a title."); return; }
+    if (selectedIds.size < 1) { toast.error("Select at least one file."); return; }
     setLoading(true);
     try {
-      const selectedFiles = files.filter((f) => selectedIds.has(f.id));
-      const combinedText = selectedFiles
-        .map((f) => `=== ${f.fileName} ===\n${f.extractedText}`)
-        .join("\n\n");
-
-      const reviewerId = await createReviewer(
-        title.trim(),
-        Array.from(selectedIds),
-        combinedText,
-        description.trim()
-      );
-
+      const selected = files.filter((f) => selectedIds.has(f.id));
+      const combinedText = selected.map((f) => `=== ${f.fileName} ===\n${f.extractedText}`).join("\n\n");
+      const id = await createReviewer(title.trim(), Array.from(selectedIds), combinedText, description.trim());
       toast.success("Reviewer created!");
       onClose();
-      router.push(`/review?reviewerId=${reviewerId}`);
-    } catch {
-      toast.error("Failed to create reviewer.");
-    } finally {
-      setLoading(false);
-    }
+      router.push(`/review?reviewerId=${id}`);
+    } catch { toast.error("Failed to create reviewer."); }
+    finally { setLoading(false); }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div
-        className="w-full max-w-lg rounded-2xl border flex flex-col max-h-[85vh]"
-        style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
-      >
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 50,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 16, background: "rgba(0,0,0,0.45)",
+    }}>
+      <div style={{
+        width: "100%", maxWidth: 500,
+        background: "var(--card)", border: "1.5px solid var(--border)",
+        borderRadius: 4, boxShadow: "4px 6px 0 var(--border-2)",
+        display: "flex", flexDirection: "column", maxHeight: "85vh",
+      }}>
         {/* Header */}
-        <div
-          className="flex items-center justify-between p-5 border-b"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <div className="flex items-center gap-2">
-            <GitMerge className="text-violet-400 w-5 h-5" />
-            <h2 className="text-white font-bold text-lg">Combine Reviewers</h2>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 20px", borderBottom: "1px solid var(--border-2)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <GitMerge size={16} style={{ color: "var(--blue)" }} />
+            <span className="hand" style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>
+              combine reviewers
+            </span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
-            <X size={18} />
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 4 }}>
+            <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Title *</label>
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label className="hand" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>
+              title
+            </label>
             <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              type="text" value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Midterm Combined Reviewer"
-              className="w-full border rounded-xl px-4 py-2.5 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all"
-              style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" }}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-300">Description (optional)</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What topics does this cover?"
-              rows={2}
-              className="w-full border rounded-xl px-4 py-2.5 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all resize-none"
-              style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" }}
+              style={{
+                width: "100%", background: "var(--card-2)",
+                border: "1.5px solid var(--border)", borderRadius: 4,
+                padding: "8px 12px", fontSize: 13, color: "var(--ink)",
+                fontFamily: "var(--font-sans)", outline: "none",
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = "var(--blue)"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "var(--border)"}
             />
           </div>
 
           <div>
-            <p className="text-sm font-medium text-slate-300 mb-2">
-              Select Files ({selectedIds.size} selected)
-            </p>
+            <label className="hand" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>
+              description <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-4)" }}>(optional)</span>
+            </label>
+            <textarea
+              value={description} onChange={(e) => setDescription(e.target.value)}
+              placeholder="what topics does this cover?"
+              rows={2}
+              style={{
+                width: "100%", background: "var(--card-2)",
+                border: "1.5px solid var(--border)", borderRadius: 4,
+                padding: "8px 12px", fontSize: 13, color: "var(--ink)",
+                fontFamily: "var(--font-sans)", outline: "none", resize: "none",
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = "var(--blue)"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "var(--border)"}
+            />
+          </div>
+
+          <div>
+            <label className="hand" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-2)", display: "block", marginBottom: 8 }}>
+              select files <span style={{ fontSize: 12, fontWeight: 400, color: "var(--ink-4)" }}>({selectedIds.size} selected)</span>
+            </label>
             {files.length === 0 ? (
-              <p className="text-slate-500 text-sm text-center py-6">
-                No files uploaded yet. Upload some files first.
+              <p style={{ fontSize: 13, color: "var(--ink-4)", padding: "20px 0", textAlign: "center" }}>
+                No files uploaded yet.
               </p>
             ) : (
-              <div className="flex flex-col gap-2">
-                {files.map((file) => (
-                  <button
-                    key={file.id}
-                    onClick={() => toggleFile(file.id)}
-                    className="flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:border-violet-500/40"
-                    style={{
-                      backgroundColor: selectedIds.has(file.id)
-                        ? "rgba(124,58,237,0.1)"
-                        : "rgba(255,255,255,0.03)",
-                      borderColor: selectedIds.has(file.id)
-                        ? "rgba(124,58,237,0.4)"
-                        : "var(--border)",
-                    }}
-                  >
-                    {selectedIds.has(file.id) ? (
-                      <CheckSquare size={16} className="text-violet-400 flex-shrink-0" />
-                    ) : (
-                      <Square size={16} className="text-slate-500 flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{file.fileName}</p>
-                      <p className="text-slate-500 text-xs">
-                        {file.extractedText.length} characters extracted
-                      </p>
-                    </div>
-                  </button>
-                ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {files.map((f) => {
+                  const sel = selectedIds.has(f.id);
+                  return (
+                    <button key={f.id} onClick={() => toggle(f.id)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 12px", borderRadius: 4, cursor: "pointer", textAlign: "left",
+                        background: sel ? "var(--blue-light)" : "var(--card-2)",
+                        border: `1.5px solid ${sel ? "var(--blue)" : "var(--border)"}`,
+                        transition: "all .12s",
+                      }}>
+                      {/* Checkbox */}
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 3, flexShrink: 0,
+                        border: `2px solid ${sel ? "var(--blue)" : "var(--border)"}`,
+                        background: sel ? "var(--blue)" : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {sel && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {f.fileName}
+                        </p>
+                        <p style={{ fontSize: 11, color: "var(--ink-4)", margin: 0 }}>
+                          {f.extractedText.length.toLocaleString()} chars
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div
-          className="p-5 border-t flex gap-3"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border text-slate-300 hover:bg-white/5 text-sm font-medium transition-all"
-            style={{ borderColor: "var(--border)" }}
-          >
-            Cancel
+        <div style={{
+          display: "flex", gap: 8, padding: "14px 20px",
+          borderTop: "1px solid var(--border-2)",
+        }}>
+          <button onClick={onClose} className="btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
+            cancel
           </button>
-          <button
-            onClick={handleCombine}
-            disabled={loading || selectedIds.size === 0 || !title.trim()}
-            className="flex-1 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
-          >
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <GitMerge size={15} />}
-            {loading ? "Creating..." : "Combine & Review"}
+          <button onClick={handleCombine} disabled={loading || selectedIds.size === 0 || !title.trim()}
+            className="btn-primary"
+            style={{ flex: 1, justifyContent: "center", opacity: (!title.trim() || selectedIds.size === 0) ? 0.5 : 1 }}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <GitMerge size={14} />}
+            {loading ? "creating..." : "combine & review"}
           </button>
         </div>
       </div>
