@@ -1,5 +1,5 @@
 "use client";
-
+import HelloKittyBanner from "@/components/ui/HelloKittyBanner";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
@@ -128,7 +128,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
-
+  <HelloKittyBanner />
    {/* Tab nav */}
 <div className="dashboard-tabs" style={{
   background: "var(--card)",

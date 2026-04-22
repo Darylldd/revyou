@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import HelloKittyBanner from "@/components/ui/HelloKittyBanner";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ background: "var(--paper)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -12,6 +12,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           Review<span style={{ color: "var(--blue)" }}>AI</span>
         </Link>
       </nav>
+      <HelloKittyBanner />
+
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 16px" }}>
         {children}
       </div>
