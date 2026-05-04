@@ -22,9 +22,9 @@ export default function LoginPage() {
 
   function validate() {
     const e: typeof errors = {};
-    if (!email.trim()) e.email = "email required";
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "invalid email";
-    if (!password) e.password = "password required";
+    if (!email.trim()) e.email = "Email is required.";
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Invalid email.";
+    if (!password) e.password = "Password is required.";
     setErrors(e);
     return !Object.keys(e).length;
   }
@@ -38,10 +38,8 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
-      if (code === "auth/invalid-credential" || code === "auth/wrong-password")
-        toast.error("Wrong email or password.");
-      else if (code === "auth/too-many-requests")
-        toast.error("Too many attempts.");
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password") toast.error("Wrong email or password.");
+      else if (code === "auth/too-many-requests") toast.error("Too many attempts.");
       else toast.error("Login failed.");
     } finally { setLoading(false); }
   }
@@ -59,38 +57,28 @@ export default function LoginPage() {
 
   return (
     <div style={{ width: "100%", maxWidth: 400 }} className="fade-up">
-      {/* Card — looks like a lined index card */}
       <div style={{
         background: "var(--card)", border: "1px solid var(--border)",
-        borderRadius: 3, padding: "32px",
-        boxShadow: "3px 4px 0 var(--border-2)",
-        position: "relative",
-      }} className="tape">
-        <h1 className="hand" style={{ fontSize: 28, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>
-          welcome back
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 24 }}>
-          pick up where you left off
-        </p>
+        borderRadius: 16, padding: "32px",
+      }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Welcome back</h1>
+        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 24 }}>Sign in to your account</p>
 
-        <button
-          onClick={handleGoogle} disabled={gLoading || loading}
+        <button onClick={handleGoogle} disabled={gLoading || loading}
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-            gap: 8, padding: "9px 16px",
-            background: "var(--card-2)", border: "1.5px solid var(--border)",
-            borderRadius: 4, fontSize: 13, fontWeight: 500,
-            color: "var(--ink-2)", cursor: "pointer", marginBottom: 20,
-          }}
-        >
+            gap: 8, padding: "9px 16px", background: "var(--card-2)",
+            border: "1.5px solid var(--border)", borderRadius: 10,
+            fontSize: 13, fontWeight: 500, color: "var(--ink-2)", cursor: "pointer", marginBottom: 20,
+          }}>
           {gLoading ? <Spinner size={16} /> : <GoogleIcon size={16} />}
-          continue with Google
+          Continue with Google
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <div style={{ flex: 1, height: "1.5px", background: "var(--border-2)" }} />
-          <span className="hand" style={{ fontSize: 14, color: "var(--ink-4)" }}>or</span>
-          <div style={{ flex: 1, height: "1.5px", background: "var(--border-2)" }} />
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: 12, color: "var(--ink-4)" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
 
         <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -101,29 +89,25 @@ export default function LoginPage() {
             value={password} onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: undefined })); }}
             error={errors.password} autoComplete="current-password"
             rightElement={
-              <button type="button" onClick={() => setShowPw((v) => !v)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0 }}>
+              <button type="button" onClick={() => setShowPw((v) => !v)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0, display: "flex" }}>
                 {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
             } />
-          <button type="submit" disabled={loading || gLoading} style={{
-            background: "var(--blue)", color: "#fff",
-            border: "none", borderRadius: 4,
-            padding: "10px 16px", fontSize: 14, fontWeight: 600,
-            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-            opacity: loading ? 0.7 : 1, marginTop: 4,
-          }}>
+          <button type="submit" disabled={loading || gLoading} className="btn-primary"
+            style={{ justifyContent: "center", padding: "10px", fontSize: 14, marginTop: 4, opacity: loading ? 0.7 : 1 }}>
             {loading ? <Spinner size={15} /> : null}
-            {loading ? "signing in..." : "sign in"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>
 
-      <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--ink-3)" }}>
-        no account?{" "}
-        <Link href="/signup" style={{ color: "var(--blue)", fontWeight: 600 }}>sign up free</Link>
+      <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--ink-3)" }}>
+        No account?{" "}
+        <Link href="/signup" style={{ color: "var(--blue)", fontWeight: 600, textDecoration: "none" }}>Sign up free</Link>
         {" · "}
-        <Link href="/review" style={{ color: "var(--ink-4)" }}>try without account</Link>
-      </div>
+        <Link href="/review" style={{ color: "var(--ink-4)", textDecoration: "none" }}>Try without account</Link>
+      </p>
     </div>
   );
 }

@@ -1,19 +1,20 @@
 "use client";
-import HelloKittyBanner from "@/components/ui/HelloKittyBanner";
+
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, LogOut, ChevronDown } from "lucide-react";
+import { Sparkles, Plus, LogOut, ChevronDown, LayoutDashboard, Upload, BookOpen } from "lucide-react";
 import Spinner from "@/components/ui/Spinner";
 import ThemeSwitch from "@/components/ui/ThemeSwitch";
+import HelloKittyBanner from "@/components/ui/HelloKittyBanner";
 import toast from "react-hot-toast";
 
 const tabs = [
-  { href: "/dashboard",           label: "my desk" },
-  { href: "/dashboard/upload",    label: "upload" },
-  { href: "/dashboard/reviewers", label: "my notes" },
+  { href: "/dashboard",           label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/upload",    label: "Upload",    icon: Upload },
+  { href: "/dashboard/reviewers", label: "Reviewers", icon: BookOpen },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--paper)" }}>
       <div style={{ textAlign: "center" }}>
         <Spinner size={24} />
-        <p className="hand" style={{ marginTop: 10, color: "var(--ink-3)", fontSize: 16 }}>loading...</p>
+        <p style={{ marginTop: 10, color: "var(--ink-3)", fontSize: 13 }}>Loading...</p>
       </div>
     </div>
   );
@@ -49,42 +50,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ background: "var(--paper)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+
       {/* Top bar */}
       <header style={{
-        background: "var(--card)",
-        borderBottom: "1.5px solid var(--border)",
-        padding: "0 20px",
-        height: "48px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
+        background: "var(--card)", borderBottom: "1px solid var(--border)",
+        padding: "0 20px", height: 52,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: "sticky", top: 0, zIndex: 20,
       }}>
-        <Link href="/" className="hand" style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>
-          Review<span style={{ color: "var(--blue)" }}>AI</span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 7, textDecoration: "none" }}>
+          <Sparkles size={16} style={{ color: "var(--blue)" }} />
+          <span style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)" }}>RevYouw</span>
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Link href="/review" className="btn-primary" style={{ fontSize: 13 }}>
-            <Plus size={13} /> new session
+            <Plus size={13} /> New Review
           </Link>
 
           <ThemeSwitch />
 
-          {/* User pill */}
           <div style={{ position: "relative" }}>
-            <button
-              onClick={() => setProfileOpen((v) => !v)}
+            <button onClick={() => setProfileOpen((v) => !v)}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "4px 8px 4px 4px",
-                background: profileOpen ? "var(--paper)" : "transparent",
-                border: "1.5px solid " + (profileOpen ? "var(--border)" : "transparent"),
+                background: profileOpen ? "var(--card-2)" : "transparent",
+                border: `1px solid ${profileOpen ? "var(--border)" : "transparent"}`,
                 borderRadius: 20, cursor: "pointer",
-              }}
-            >
+              }}>
               {user.photoURL ? (
                 <Image src={user.photoURL} alt="avatar" width={26} height={26} style={{ borderRadius: "50%" }} />
               ) : (
@@ -97,67 +91,67 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {initials}
                 </div>
               )}
-             <span className="user-name-text" style={{ fontSize: 13, color: "var(--ink-2)", fontWeight: 500, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-  {user.displayName?.split(" ")[0] ?? "Me"}
-</span>
+              <span style={{ fontSize: 13, color: "var(--ink-2)", fontWeight: 500 }}>
+                {user.displayName?.split(" ")[0] ?? "Me"}
+              </span>
               <ChevronDown size={12} style={{ color: "var(--ink-4)", transform: profileOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
             </button>
 
             {profileOpen && (
               <div style={{
                 position: "absolute", top: "calc(100% + 6px)", right: 0,
-                background: "var(--card)", border: "1.5px solid var(--border)",
-                borderRadius: 4, boxShadow: "3px 4px 0 var(--border-2)",
-                minWidth: 160, zIndex: 50, padding: "4px 0",
+                background: "var(--card)", border: "1px solid var(--border)",
+                borderRadius: 12, minWidth: 170, zIndex: 50, padding: "4px 0",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
               }}>
-                <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border-2)" }}>
-                  <p style={{ fontSize: 11, color: "var(--ink-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</p>
+                <div style={{ padding: "8px 14px", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontSize: 11, color: "var(--ink-3)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</p>
                 </div>
                 <button onClick={handleLogout} disabled={loggingOut}
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 8,
-                    padding: "9px 12px", background: "none", border: "none",
+                    padding: "9px 14px", background: "none", border: "none",
                     cursor: "pointer", fontSize: 13, color: "var(--red)",
                     fontFamily: "var(--font-sans)",
                   }}>
                   {loggingOut ? <Spinner size={13} /> : <LogOut size={13} />}
-                  sign out
+                  Sign out
                 </button>
               </div>
             )}
           </div>
         </div>
       </header>
-  <HelloKittyBanner />
-   {/* Tab nav */}
-<div className="dashboard-tabs" style={{
-  background: "var(--card)",
-  borderBottom: "1.5px solid var(--border)",
-  padding: "0 20px",
-  display: "flex", gap: 0,
-}}>
-  {tabs.map((tab) => {
-    const active = pathname === tab.href;
-    return (
-      <Link key={tab.href} href={tab.href}
-        className="hand"
-        style={{
-          fontSize: 16, fontWeight: active ? 700 : 600,
-          padding: "9px 16px",
-          color: active ? "var(--blue)" : "var(--ink-3)",
-          textDecoration: "none",
-          borderBottom: `2.5px solid ${active ? "var(--blue)" : "transparent"}`,
-          marginBottom: "-1.5px",
-          transition: "color .15s, border-color .15s",
-        }}
-      >
-        {tab.label}
-      </Link>
-    );
-  })}
-</div>
 
-      <main style={{ flex: 1, padding: "24px 20px", maxWidth: 1100, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <HelloKittyBanner />
+
+      {/* Tab nav */}
+      <div style={{
+        background: "var(--card)", borderBottom: "1px solid var(--border)",
+        padding: "0 20px", display: "flex", gap: 0,
+      }}>
+        {tabs.map((tab) => {
+          const active = pathname === tab.href;
+          return (
+            <Link key={tab.href} href={tab.href}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                fontSize: 13, fontWeight: active ? 600 : 500,
+                padding: "12px 16px",
+                color: active ? "var(--blue)" : "var(--ink-3)",
+                textDecoration: "none",
+                borderBottom: `2px solid ${active ? "var(--blue)" : "transparent"}`,
+                marginBottom: "-1px",
+                transition: "color .15s, border-color .15s",
+              }}>
+              <tab.icon size={14} />
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <main style={{ flex: 1, padding: "24px 20px", maxWidth: 1100, width: "100%", margin: "0 auto" }}>
         {children}
       </main>
     </div>

@@ -4,12 +4,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "paper" | "hello-kitty" | "readable" | "dark" | "plain";
 
-const THEMES: { id: Theme; label: string; emoji: string }[] = [
-  { id: "paper",       label: "Paper",       emoji: "" },
-  { id: "hello-kitty", label: "Hello Kitty", emoji: "" },
-  { id: "readable",    label: "Readable",    emoji: "" },
-  { id: "dark",        label: "Dark",        emoji: "" },
-  { id: "plain",       label: "Plain",       emoji: "" },
+
+const THEMES: { id: Theme; label: string; dot: string }[] = [
+  { id: "paper",        label: "Paper",        dot: "#c9bfad" },
+  { id: "hello-kitty",  label: "Hello Kitty",  dot: "#e91e8c" },
+  { id: "readable",     label: "Readable",     dot: "#2563eb" },
+  { id: "dark",         label: "Dark",         dot: "#818cf8" },
+  { id: "plain",        label: "Plain",        dot: "#555555" },
 ];
 
 interface ThemeCtx { theme: Theme; setTheme: (t: Theme) => void; themes: typeof THEMES; }

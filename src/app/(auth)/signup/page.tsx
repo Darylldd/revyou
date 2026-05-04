@@ -28,10 +28,10 @@ export default function SignupPage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!name.trim() || name.trim().length < 2) e.name = "at least 2 characters";
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) e.email = "invalid email";
-    if (!pw || pw.length < 6) e.pw = "at least 6 characters";
-    if (pw !== cf) e.cf = "passwords don't match";
+    if (!name.trim() || name.trim().length < 2) e.name = "At least 2 characters.";
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) e.email = "Invalid email.";
+    if (!pw || pw.length < 6) e.pw = "At least 6 characters.";
+    if (pw !== cf) e.cf = "Passwords don't match.";
     setErrors(e);
     return !Object.keys(e).length;
   }
@@ -52,7 +52,7 @@ export default function SignupPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
-      if (code === "auth/email-already-in-use") setErrors((p) => ({ ...p, email: "already registered" }));
+      if (code === "auth/email-already-in-use") setErrors((p) => ({ ...p, email: "Email already registered." }));
       else toast.error("Sign up failed.");
     } finally { setLoading(false); }
   }
@@ -74,79 +74,69 @@ export default function SignupPage() {
   }
 
   const strength = pw.length >= 12 ? 4 : pw.length >= 10 ? 3 : pw.length >= 8 ? 2 : pw.length >= 6 ? 1 : 0;
-  const sColors = ["var(--border-2)", "#dc2626", "#d97706", "#ca8a04", "#16a34a"];
-  const sLabels = ["", "weak", "fair", "good", "strong"];
+  const sColors = ["var(--border)", "#ef4444", "#f97316", "#eab308", "#22c55e"];
 
   return (
     <div style={{ width: "100%", maxWidth: 420 }} className="fade-up">
       <div style={{
         background: "var(--card)", border: "1px solid var(--border)",
-        borderRadius: 3, padding: "32px",
-        boxShadow: "3px 4px 0 var(--border-2)",
-        position: "relative",
-      }} className="tape">
-        <h1 className="hand" style={{ fontSize: 28, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>
-          create account
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 24 }}>free forever — no credit card</p>
+        borderRadius: 16, padding: "32px",
+      }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Create account</h1>
+        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 24 }}>Free forever — no credit card</p>
 
-        <button onClick={handleGoogle} disabled={gLoading || loading} style={{
-          width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 8, padding: "9px 16px",
-          background: "var(--card-2)", border: "1.5px solid var(--border)",
-          borderRadius: 4, fontSize: 13, fontWeight: 500,
-          color: "var(--ink-2)", cursor: "pointer", marginBottom: 20,
-        }}>
+        <button onClick={handleGoogle} disabled={gLoading || loading}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 8, padding: "9px 16px", background: "var(--card-2)",
+            border: "1.5px solid var(--border)", borderRadius: 10,
+            fontSize: 13, fontWeight: 500, color: "var(--ink-2)", cursor: "pointer", marginBottom: 20,
+          }}>
           {gLoading ? <Spinner size={16} /> : <GoogleIcon size={16} />}
-          continue with Google
+          Continue with Google
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <div style={{ flex: 1, height: "1.5px", background: "var(--border-2)" }} />
-          <span className="hand" style={{ fontSize: 14, color: "var(--ink-4)" }}>or</span>
-          <div style={{ flex: 1, height: "1.5px", background: "var(--border-2)" }} />
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: 12, color: "var(--ink-4)" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
 
         <form onSubmit={handleSignup} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-          <Input label="Name" type="text" placeholder="Juan dela Cruz" icon={User}
+          <Input label="Full Name" type="text" placeholder="Juan dela Cruz" icon={User}
             value={name} onChange={(e) => { setName(e.target.value); setErrors((p) => ({ ...p, name: "" })); }}
             error={errors.name} />
           <Input label="Email" type="email" placeholder="you@example.com" icon={Mail}
             value={email} onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: "" })); }}
             error={errors.email} />
           <div>
-            <Input label="Password" type={showPw ? "text" : "password"} placeholder="min. 6 characters" icon={Lock}
+            <Input label="Password" type={showPw ? "text" : "password"} placeholder="Min. 6 characters" icon={Lock}
               value={pw} onChange={(e) => { setPw(e.target.value); setErrors((p) => ({ ...p, pw: "" })); }}
               error={errors.pw}
-              rightElement={<button type="button" onClick={() => setShowPw((v) => !v)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0 }}>{showPw ? <EyeOff size={14} /> : <Eye size={14} />}</button>} />
+              rightElement={<button type="button" onClick={() => setShowPw((v) => !v)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0, display: "flex" }}>{showPw ? <EyeOff size={14} /> : <Eye size={14} />}</button>} />
             {pw.length > 0 && (
-              <div style={{ display: "flex", gap: 3, alignItems: "center", marginTop: 6 }}>
+              <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 6 }}>
                 {[1,2,3,4].map((i) => (
-                  <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= strength ? sColors[strength] : "var(--border-2)", transition: "background .2s" }} />
+                  <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= strength ? sColors[strength] : "var(--border)", transition: "background .2s" }} />
                 ))}
-                <span className="hand" style={{ fontSize: 13, color: "var(--ink-3)", marginLeft: 6, minWidth: 36 }}>{sLabels[strength]}</span>
               </div>
             )}
           </div>
-          <Input label="Confirm password" type={showCf ? "text" : "password"} placeholder="repeat password" icon={Lock}
+          <Input label="Confirm Password" type={showCf ? "text" : "password"} placeholder="Repeat password" icon={Lock}
             value={cf} onChange={(e) => { setCf(e.target.value); setErrors((p) => ({ ...p, cf: "" })); }}
             error={errors.cf}
-            rightElement={<button type="button" onClick={() => setShowCf((v) => !v)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0 }}>{showCf ? <EyeOff size={14} /> : <Eye size={14} />}</button>} />
-          <button type="submit" disabled={loading || gLoading} style={{
-            background: "var(--blue)", color: "#fff", border: "none", borderRadius: 4,
-            padding: "10px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-            opacity: loading ? 0.7 : 1, marginTop: 4,
-          }}>
+            rightElement={<button type="button" onClick={() => setShowCf((v) => !v)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0, display: "flex" }}>{showCf ? <EyeOff size={14} /> : <Eye size={14} />}</button>} />
+          <button type="submit" disabled={loading || gLoading} className="btn-primary"
+            style={{ justifyContent: "center", padding: "10px", fontSize: 14, marginTop: 4, opacity: loading ? 0.7 : 1 }}>
             {loading ? <Spinner size={15} /> : null}
-            {loading ? "creating..." : "create account"}
+            {loading ? "Creating..." : "Create Account"}
           </button>
         </form>
       </div>
-      <div style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--ink-3)" }}>
-        already have an account?{" "}
-        <Link href="/login" style={{ color: "var(--blue)", fontWeight: 600 }}>sign in</Link>
-      </div>
+      <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--ink-3)" }}>
+        Already have an account?{" "}
+        <Link href="/login" style={{ color: "var(--blue)", fontWeight: 600, textDecoration: "none" }}>Sign in</Link>
+      </p>
     </div>
   );
 }

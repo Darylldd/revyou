@@ -17,14 +17,14 @@ interface Props {
 }
 
 const modes = [
-  { id: "flashcard" as ReviewMode, label: "Flashcards", desc: "flip cards", icon: Brain, color: "#7c3aed", bg: "#ede9fe" },
+  { id: "flashcard" as ReviewMode, label: "Flashcards", desc: "flip cards", icon: Brain, color: "#cc6f6f", bg: "var(--blue-light)" },
   { id: "multiple-choice" as ReviewMode, label: "Quiz", desc: "4-choice", icon: Zap, color: "var(--blue)", bg: "var(--blue-light)" },
   { id: "combined" as ReviewMode, label: "Both", desc: "cards + quiz", icon: Layers, color: "var(--green)", bg: "var(--green-light)" },
 ];
 
 const diffs = [
   { id: "easy" as DifficultyLevel, label: "Easy", desc: "definitions", color: "var(--green)", bg: "var(--green-light)", border: "#86efac" },
-  { id: "medium" as DifficultyLevel, label: "Medium", desc: "concepts", color: "#d97706", bg: "#fef9c3", border: "#fde047" },
+  { id: "medium" as DifficultyLevel, label: "Medium", desc: "concepts", color: "var(--yellow)", bg: "var(--yellow-light)", border: "#fde047" },
   { id: "hard" as DifficultyLevel, label: "Hard", desc: "analysis", color: "var(--red)", bg: "var(--red-light)", border: "#fca5a5" },
 ];
 
@@ -183,7 +183,7 @@ export default function SessionConfig({ preloadedText, preloadedTitle, onStart, 
                   border: `1.5px dashed ${isDragActive ? "var(--blue)" : "var(--border)"}`,
                   borderRadius: 3, padding: "20px 12px", textAlign: "center",
                   cursor: uploading ? "not-allowed" : "pointer",
-                  background: isDragActive ? "var(--blue-dim)" : "rgba(255,255,255,0.5)",
+                  background: isDragActive ? "var(--blue-dim)" : "rgba(255, 255, 255, 0.12)",
                 }}>
                   <input {...getInputProps()} />
                   {uploading ? (

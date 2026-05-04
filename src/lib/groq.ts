@@ -13,14 +13,10 @@ const difficultyInstructions: Record<DifficultyLevel, string> = {
 - Scenario-based questions requiring synthesis`,
 };
 
-// ─────────────────────────────────────────────────────────────────
-// Test bank detector
-// Returns true if the text looks like a test bank / question set
-// ─────────────────────────────────────────────────────────────────
+
 export function isTestBank(text: string): boolean {
   const normalized = text.toLowerCase();
 
-  // Must have question-like patterns
   const hasNumberedQuestions = /^\s*\d+[\.\)]\s+\w/m.test(text);
   const hasChoiceLetters =
     /^\s*[abcd][\.\)]\s+\w/im.test(text) ||
@@ -46,9 +42,7 @@ export function isTestBank(text: string): boolean {
     (hasAnswerKey && hasChoiceLetters);
 }
 
-// ─────────────────────────────────────────────────────────────────
 // Parse test bank text into MCQ format using AI
-// ─────────────────────────────────────────────────────────────────
 export async function parseTestBank(
   text: string,
   count: number
@@ -110,9 +104,7 @@ IMPORTANT:
     .slice(0, count);
 }
 
-// ─────────────────────────────────────────────────────────────────
 // Shuffle
-// ─────────────────────────────────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -122,9 +114,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// ─────────────────────────────────────────────────────────────────
 // Deduplication
-// ─────────────────────────────────────────────────────────────────
 function normalize(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
 }
@@ -159,9 +149,7 @@ function dedupeMcq(qs: MultipleChoiceQuestion[]) {
   return out;
 }
 
-// ─────────────────────────────────────────────────────────────────
 // Flashcard generation
-// ─────────────────────────────────────────────────────────────────
 export async function generateFlashcards(
   text: string,
   difficulty: DifficultyLevel,
@@ -214,9 +202,7 @@ Output JSON array:
   return shuffled.slice(0, count).map((c, i) => ({ ...c, id: `fc_${i + 1}` }));
 }
 
-// ─────────────────────────────────────────────────────────────────
 // MCQ generation
-// ─────────────────────────────────────────────────────────────────
 export async function generateMultipleChoice(
   text: string,
   difficulty: DifficultyLevel,
@@ -311,9 +297,7 @@ Output JSON array (choices = 4 plain strings, no "A)" labels):
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
 // Combined
-// ─────────────────────────────────────────────────────────────────
 export async function generateCombined(
   text: string,
   difficulty: DifficultyLevel,
@@ -326,9 +310,7 @@ export async function generateCombined(
   return { flashcards, questions };
 }
 
-// ─────────────────────────────────────────────────────────────────
 // JSON parser
-// ─────────────────────────────────────────────────────────────────
 function parseJsonArray<T>(raw: string): T[] {
   const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
   const start = cleaned.indexOf("[");

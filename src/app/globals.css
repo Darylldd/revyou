@@ -1,234 +1,189 @@
 @import "tailwindcss";
 
-/* ── Base (paper theme = default) ─────────────────────── */
-:root, [data-theme="paper"] {
+:root {
   --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-hand: 'Caveat', cursive;
+  --font-hand: var(--font-inter), system-ui, sans-serif;
 
-  --paper:      #f0ebe0;
-  --paper-2:    #e8e1d4;
-  --card:       #fffef9;
-  --card-2:     #faf7f0;
+  /* Surfaces */
+  --paper:      #0f0f1a;
+  --paper-2:    #13131f;
+  --card:       #1a1a2e;
+  --card-2:     #1e1e35;
+  --surface-3:  #252540;
 
-  --ink:        #1c1917;
-  --ink-2:      #44403c;
-  --ink-3:      #78716c;
-  --ink-4:      #a8a29e;
-  --ink-5:      #d6cfc4;
+  /* Ink */
+  --ink:        #e2e8f0;
+  --ink-2:      #cbd5e1;
+  --ink-3:      #94a3b8;
+  --ink-4:      #64748b;
+  --ink-5:      #334155;
 
-  --rule:       #dde8f5;
-  --rule-red:   #f9c0c0;
-  --border:     #c9bfad;
-  --border-2:   #d6cfc4;
+  /* Borders */
+  --border:     #2d2d50;
+  --border-2:   #393960;
+  --rule:       #1e1e35;
+  --rule-red:   #4c1d95;
 
-  --blue:       #2563eb;
-  --blue-2:     #1d4ed8;
-  --blue-light: #dbeafe;
-  --blue-dim:   rgba(37,99,235,0.1);
-  --btn-shadow: rgba(37,99,235,0.28);
+  /* Violet accent */
+  --blue:       #7c3aed;
+  --blue-2:     #6d28d9;
+  --blue-light: rgba(124,58,237,0.15);
+  --blue-dim:   rgba(124,58,237,0.08);
+  --btn-shadow: rgba(124,58,237,0.3);
 
-  --red:        #dc2626;
-  --red-light:  #fee2e2;
-  --green:      #16a34a;
-  --green-light:#dcfce7;
-  --yellow:     #d97706;
+  /* Semantic */
+  --red:        #ef4444;
+  --red-light:  rgba(239,68,68,0.12);
+  --green:      #22c55e;
+  --green-light:rgba(34,197,94,0.12);
+  --yellow:     #a7b419;
+   --yellow-light: rgba(137, 197, 34, 0.12);
 
-  --hi-yellow:  rgba(254,240,80,0.55);
-  --hi-pink:    rgba(255,150,200,0.4);
-  --hi-blue:    rgba(147,197,253,0.45);
+  /* Highlighters — subtle in dark mode */
+  --hi-yellow:  rgba(0, 0, 0, 0.2);
+  --hi-pink:    rgba(168,85,247,0.2);
+  --hi-blue:    rgba(124,58,237,0.2);
 
-  --sticky-y:   #fef9c3;
-  --sticky-p:   #fce7f3;
-  --sticky-b:   #dbeafe;
-  --sticky-g:   #dcfce7;
-  --tape:       #f5e6a3;
+  /* Sticky notes — dark tinted */
+  --sticky-y:   #1a0728;
+  --sticky-p:   #1e0f1e;
+  --sticky-b:   #0f0f2e;
+  --sticky-g:   #0f1e12;
+  --tape:       #2d2050;
 
-  --radius-btn: 3px;
-  --font-btn:   var(--font-hand);
-  --font-btn-size: 15px;
-}
-
-/* ── Hello Kitty ──────────────────────────────────────── */
-[data-theme="hello-kitty"] {
-  --paper:      #fff0f5;
-  --paper-2:    #fce4ee;
-  --card:       #ffffff;
-  --card-2:     #fff5f8;
-
-  --ink:        #3d0a1e;
-  --ink-2:      #6b1a3a;
-  --ink-3:      #b06080;
-  --ink-4:      #dda0b8;
-  --ink-5:      #f4d0e0;
-
-  --rule:       #ffd6e7;
-  --rule-red:   #ff69b4;
-  --border:     #f4a8c8;
-  --border-2:   #f8cfe0;
-
-  --blue:       #e91e8c;
-  --blue-2:     #c2185b;
-  --blue-light: #fce7f3;
-  --blue-dim:   rgba(233,30,140,0.1);
-  --btn-shadow: rgba(233,30,140,0.35);
-
-  --red:        #e91e8c;
-  --red-light:  #fce7f3;
-  --green:      #e91e8c;
-  --green-light:#fce7f3;
-  --yellow:     #f06292;
-
-  --hi-yellow:  rgba(255,182,193,0.65);
-  --hi-pink:    rgba(244,114,182,0.5);
-  --hi-blue:    rgba(249,168,212,0.5);
-
-  --sticky-y:   #fff0f5;
-  --sticky-p:   #fce7f3;
-  --sticky-b:   #fce7f3;
-  --sticky-g:   #fce7f3;
-  --tape:       #ffb6c1;
-
-  --radius-btn: 20px;
-  --font-btn:   var(--font-hand);
-  --font-btn-size: 15px;
-}
-
-/* ── Readable ─────────────────────────────────────────── */
-[data-theme="readable"] {
-  --paper:      #ffffff;
-  --paper-2:    #f3f4f6;
-  --card:       #ffffff;
-  --card-2:     #f9fafb;
-
-  --ink:        #111827;
-  --ink-2:      #374151;
-  --ink-3:      #6b7280;
-  --ink-4:      #9ca3af;
-  --ink-5:      #e5e7eb;
-
-  --rule:       #e5e7eb;
-  --rule-red:   #fecaca;
-  --border:     #d1d5db;
-  --border-2:   #e5e7eb;
-
-  --blue:       #1d4ed8;
-  --blue-2:     #1e40af;
-  --blue-light: #dbeafe;
-  --blue-dim:   rgba(29,78,216,0.08);
-  --btn-shadow: rgba(29,78,216,0.2);
-
-  --red:        #dc2626;
-  --red-light:  #fee2e2;
-  --green:      #16a34a;
-  --green-light:#dcfce7;
-  --yellow:     #d97706;
-
-  --hi-yellow:  rgba(254,240,138,0.5);
-  --hi-pink:    rgba(251,191,36,0.3);
-  --hi-blue:    rgba(147,197,253,0.4);
-
-  --sticky-y:   #fefce8;
-  --sticky-p:   #fdf2f8;
-  --sticky-b:   #eff6ff;
-  --sticky-g:   #f0fdf4;
-  --tape:       #fef9c3;
-
-  --radius-btn: 6px;
+  --radius-btn: 10px;
   --font-btn:   var(--font-sans);
   --font-btn-size: 13px;
 }
 
-/* ── Dark ─────────────────────────────────────────────── */
+/* ── Hello Kitty ─────────────────────────────────── */
+[data-theme="hello-kitty"] {
+  --paper:       #fff0f5;
+  --paper-2:     #fce4ee;
+  --card:        #ffffff;
+  --card-2:      #fff5f8;
+  --surface-3:   #fce7f3;
+  --ink:         #3d0a1e;
+  --ink-2:       #6b1a3a;
+  --ink-3:       #b06080;
+  --ink-4:       #dda0b8;
+  --ink-5:       #f4d0e0;
+  --rule:        #ffd6e7;
+  --rule-red:    #ff69b4;
+  --border:      #f4a8c8;
+  --border-2:    #f8cfe0;
+  --blue:        #e91e8c;
+  --blue-2:      #c2185b;
+  --blue-light:  #fce7f3;
+  --blue-dim:    rgba(233,30,140,0.1);
+  --btn-shadow:  rgba(233,30,140,0.35);
+  --red:         #e91e8c;
+  --red-light:   #fce7f3;
+  --green:       #e91e8c;
+  --green-light: #fce7f3;
+ --yellow-light: rgba(137, 197, 34, 0.12);
+  --yellow:      #f06292;
+  --hi-yellow:   rgba(255,182,193,0.65);
+  --hi-pink:     rgba(244,114,182,0.5);
+  --hi-blue:     rgba(249,168,212,0.5);
+  --sticky-y:    #fff0f5;
+  --sticky-p:    #fce7f3;
+  --sticky-b:    #fce7f3;
+  --sticky-g:    #fce7f3;
+  --tape:        #ffb6c1;
+  --radius-btn:  20px;
+  --font-btn:    var(--font-hand);
+  --font-btn-size: 14px;
+}
+
+/* ── Readable ────────────────────────────────────── */
+[data-theme="readable"] {
+  --paper:       #ffffff;
+  --paper-2:     #f3f4f6;
+  --card:        #ffffff;
+  --card-2:      #f9fafb;
+  --surface-3:   #f3f4f6;
+  --ink:         #111827;
+  --ink-2:       #374151;
+  --ink-3:       #6b7280;
+  --ink-4:       #9ca3af;
+  --ink-5:       #e5e7eb;
+  --rule:        #e5e7eb;
+  --rule-red:    #fecaca;
+  --border:      #d1d5db;
+  --border-2:    #e5e7eb;
+  --blue:        #2563eb;
+  --blue-2:      #1d4ed8;
+  --blue-light:  #dbeafe;
+  --blue-dim:    rgba(37,99,235,0.08);
+  --btn-shadow:  rgba(37,99,235,0.2);
+  --red:         #dc2626;
+  --red-light:   #fee2e2;
+  --green:       #16a34a;
+  --green-light: #dcfce7;
+   --yellow-light: rgba(137, 197, 34, 0.12);
+  --yellow:      #d97706;
+  --hi-yellow:   rgba(254,240,138,0.5);
+  --hi-pink:     rgba(251,191,36,0.3);
+  --hi-blue:     rgba(147,197,253,0.4);
+  --sticky-y:    #fefce8;
+  --sticky-p:    #fdf2f8;
+  --sticky-b:    #eff6ff;
+  --sticky-g:    #f0fdf4;
+  --tape:        #463444;
+  --radius-btn:  6px;
+  --font-btn:    var(--font-sans);
+  --font-btn-size: 13px;
+}
+
+/* ── Dark (alias of default) ─────────────────────── */
 [data-theme="dark"] {
-  --paper:      #0f0f18;
-  --paper-2:    #13131f;
-  --card:       #1a1a2e;
-  --card-2:     #242438;
-
-  --ink:        #f0eeff;
-  --ink-2:      #c4bfe8;
-  --ink-3:      #8882b8;
-  --ink-4:      #5a5580;
-  --ink-5:      #2e2a50;
-
-  --rule:       #1e1e32;
-  --rule-red:   #3d2040;
-  --border:     #2e2a50;
-  --border-2:   #3d3a60;
-
   --blue:       #818cf8;
   --blue-2:     #6366f1;
   --blue-light: rgba(129,140,248,0.15);
-  --blue-dim:   rgba(129,140,248,0.1);
-  --btn-shadow: rgba(129,140,248,0.3);
-
-  --red:        #f87171;
-  --red-light:  rgba(248,113,113,0.12);
-  --green:      #4ade80;
-  --green-light:rgba(74,222,128,0.12);
-  --yellow:     #fbbf24;
-
-  --hi-yellow:  rgba(251,191,36,0.25);
-  --hi-pink:    rgba(244,114,182,0.2);
-  --hi-blue:    rgba(129,140,248,0.2);
-
-  --sticky-y:   #2a2820;
-  --sticky-p:   #2a1f2e;
-  --sticky-b:   #1a2040;
-  --sticky-g:   #1a2820;
-  --tape:       #3d3820;
-
-  --radius-btn: 4px;
-  --font-btn:   var(--font-sans);
-  --font-btn-size: 13px;
+  --blue-dim:   rgba(129,140,248,0.08);
+  --btn-shadow: rgba(61, 63, 79, 0.25);
+  --radius-btn: 8px;
 }
 
-/* ── Plain ────────────────────────────────────────────── */
+/* ── Plain ───────────────────────────────────────── */
 [data-theme="plain"] {
-  --paper:      #fafafa;
-  --paper-2:    #f0f0f0;
-  --card:       #ffffff;
-  --card-2:     #f5f5f5;
-
-  --ink:        #000000;
-  --ink-2:      #1a1a1a;
-  --ink-3:      #555555;
-  --ink-4:      #888888;
-  --ink-5:      #cccccc;
-
-  --rule:       #e8e8e8;
-  --rule-red:   #d0d0d0;
-  --border:     #bbbbbb;
-  --border-2:   #dddddd;
-
-  --blue:       #222222;
-  --blue-2:     #000000;
-  --blue-light: #eeeeee;
-  --blue-dim:   rgba(0,0,0,0.06);
-  --btn-shadow: rgba(0,0,0,0.15);
-
-  --red:        #000000;
-  --red-light:  #f0f0f0;
-  --green:      #000000;
-  --green-light:#f5f5f5;
-  --yellow:     #333333;
-
-  --hi-yellow:  rgba(0,0,0,0.06);
-  --hi-pink:    rgba(0,0,0,0.04);
-  --hi-blue:    rgba(0,0,0,0.05);
-
-  --sticky-y:   #f5f5f5;
-  --sticky-p:   #f0f0f0;
-  --sticky-b:   #eeeeee;
-  --sticky-g:   #f0f0f0;
-  --tape:       #e0e0e0;
-
-  --radius-btn: 0px;
-  --font-btn:   var(--font-sans);
+  --paper:       #fafafa;
+  --paper-2:     #f0f0f0;
+  --card:        #ffffff;
+  --card-2:      #f5f5f5;
+  --surface-3:   #eeeeee;
+  --ink:         #000000;
+  --ink-2:       #1a1a1a;
+  --ink-3:       #555555;
+  --ink-4:       #888888;
+  --ink-5:       #cccccc;
+  --rule:        #e8e8e8;
+  --rule-red:    #d0d0d0;
+  --border:      #bbbbbb;
+  --border-2:    #dddddd;
+  --blue:        #222222;
+  --blue-2:      #000000;
+  --blue-light:  #eeeeee;
+  --blue-dim:    rgba(0,0,0,0.06);
+  --btn-shadow:  rgba(0,0,0,0.12);
+  --red:         #000000;
+  --red-light:   #f0f0f0;
+  --green:       #000000;
+  --green-light: #f5f5f5;
+   --yellow-light: rgba(137, 197, 34, 0.12);
+  --yellow:      #333333;
+  --sticky-y:    #f5f5f5;
+  --sticky-p:    #f0f0f0;
+  --sticky-b:    #eeeeee;
+  --sticky-g:    #f0f0f0;
+  --tape:        #e0e0e0;
+  --radius-btn:  0px;
+  --font-btn:    var(--font-sans);
   --font-btn-size: 12px;
 }
 
-/* ── Global resets ────────────────────────────────────── */
+/* ── Global ──────────────────────────────────────── */
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
@@ -241,8 +196,18 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-/* ── Ruled paper ──────────────────────────────────────── */
+/* Hello Kitty heart bg */
+[data-theme="hello-kitty"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M20 30 C20 30 6 22 6 13 C6 8 10 5 14 6 C16 7 18 9 20 12 C22 9 24 7 26 6 C30 5 34 8 34 13 C34 22 20 30 20 30Z' fill='%23e91e8c' opacity='0.12'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+}
+
+/* ── Ruled lines — paper & kitty only ───────────── */
 .ruled {
+  background: var(--card);
+}
+[data-theme="paper"] .ruled,
+[data-theme="hello-kitty"] .ruled {
   background: repeating-linear-gradient(
     var(--card),
     var(--card) 27px,
@@ -251,308 +216,87 @@ body {
   );
 }
 
-/* In dark/plain/readable themes, ruled = plain card bg */
-[data-theme="dark"] .ruled,
-[data-theme="plain"] .ruled,
-[data-theme="readable"] .ruled {
-  background: var(--card);
-}
-
-[data-theme="hello-kitty"] .ruled {
-  background: repeating-linear-gradient(
-    #ffffff,
-    #ffffff 27px,
-    #ffd6e7 27px,
-    #ffd6e7 28px
-  );
-}
-[data-theme="hello-kitty"] body {
-  background-color: #fff0f5;
-  background-image:
-    radial-gradient(circle, #e91e8c 1.5px, transparent 1.5px),
-    radial-gradient(circle, #e91e8c 1.5px, transparent 1.5px);
-  background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
-}
-
-[data-theme="hello-kitty"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M20 30 C20 30 6 22 6 13 C6 8 10 5 14 6 C16 7 18 9 20 12 C22 9 24 7 26 6 C30 5 34 8 34 13 C34 22 20 30 20 30Z' fill='%23e91e8c' opacity='0.18'/%3E%3C/svg%3E");
-  background-size: 40px 40px;
-}
-
 .margined { border-left: 2px solid var(--rule-red); padding-left: 16px; }
 .hand { font-family: var(--font-hand); }
 
-/* In plain/readable theme, hand font = normal */
-[data-theme="plain"] .hand,
-[data-theme="readable"] .hand {
-  font-family: var(--font-sans);
-}
-
-/* ── Pinned paper button ──────────────────────────────── */
-/*
-  Looks like a small piece of paper pinned with a thumbtack.
-  The ::before is the thumbtack head sitting on top.
-*/
+/* ── Buttons ─────────────────────────────────────── */
 .btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   background: var(--blue);
   color: #fff;
   border: none;
   padding: 8px 16px;
-  padding-top: 12px;
   border-radius: var(--radius-btn);
   font-family: var(--font-btn);
   font-size: var(--font-btn-size);
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  transition: opacity 0.15s, transform 0.1s;
   position: relative;
-
-  /* Paper shadow — bottom-right offset */
-  box-shadow: 2px 3px 0 var(--btn-shadow), 0 0 0 1.5px rgba(255,255,255,0.15) inset;
-
-  /* Slight tilt like pinned paper */
-  transform: rotate(-0.4deg);
-  transition: transform 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
 }
 
-/* Thumbtack head */
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  top: -7px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #d4a017;
-  border: 2px solid #b8860b;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
-  z-index: 1;
-}
-
-/* Thumbtack pin (vertical line) */
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 2px;
-  height: 6px;
-  background: #888;
-  border-radius: 0 0 1px 1px;
-  z-index: 0;
-}
-
-.btn-primary:hover {
-  transform: rotate(0deg) translateY(-2px);
-  box-shadow: 3px 5px 0 var(--btn-shadow), 0 0 0 1.5px rgba(255,255,255,0.15) inset;
-}
-
-.btn-primary:active {
-  transform: rotate(0deg) translateY(1px);
-  box-shadow: 1px 1px 0 var(--btn-shadow);
-}
-
-/* Hello Kitty — round pill, pink pin */
-[data-theme="hello-kitty"] .btn-primary {
-  border-radius: 24px;
-  transform: none;
-  box-shadow: 0 3px 0 var(--btn-shadow), 0 0 0 2px #fff inset;
-  padding-top: 8px;
-  background: linear-gradient(135deg, #e91e8c, #f06292);
-  border: none;
-}
-[data-theme="hello-kitty"] .btn-primary::before {
-  /* Heart pin instead of circle thumbtack */
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 12px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 12'%3E%3Cpath d='M7 11 C7 11 1 7 1 4 C1 2 2.5 1 4 1.5 C5 2 6 3 7 4.5 C8 3 9 2 10 1.5 C11.5 1 13 2 13 4 C13 7 7 11 7 11Z' fill='%23c2185b'/%3E%3C/svg%3E") center/contain no-repeat;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-[data-theme="hello-kitty"] .btn-primary::after { display: none; }
-
-[data-theme="hello-kitty"] .btn-secondary {
-  border-radius: 20px;
-  border-color: #f4a8c8;
-  box-shadow: 0 2px 0 #f8cfe0;
-}
-[data-theme="hello-kitty"] a[style*="border-bottom"] {
-  border-bottom-color: #e91e8c !important;
-}
-[data-theme="hello-kitty"] a[style*="border-bottom"] {
-  border-bottom-color: #e91e8c !important;
-}
-/* Plain — no pin, no shadow, square */
-[data-theme="plain"] .btn-primary {
-  box-shadow: none;
-  transform: none;
-  border-radius: 0;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 600;
-  padding-top: 8px;
-}
-[data-theme="plain"] .btn-primary::before,
-[data-theme="plain"] .btn-primary::after { display: none; }
-
-/* Readable — clean, no pin */
-[data-theme="readable"] .btn-primary {
-  transform: none;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px var(--btn-shadow);
-  padding-top: 8px;
-}
-[data-theme="readable"] .btn-primary::before,
-[data-theme="readable"] .btn-primary::after { display: none; }
-
-/* Dark — glow, no pin tilt */
-[data-theme="dark"] .btn-primary {
-  transform: none;
-  border-radius: 5px;
-  box-shadow: 0 0 12px rgba(129,140,248,0.3), 2px 3px 0 rgba(129,140,248,0.2);
-  padding-top: 8px;
-}
-[data-theme="dark"] .btn-primary::before {
-  background: #a78bfa;
-  border-color: #818cf8;
-}
-[data-theme="dark"] .btn-primary::after { background: #6366f1; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:active { transform: translateY(1px); }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: var(--card);
+  gap: 6px;
+  background: transparent;
   color: var(--ink-2);
   border: 1.5px solid var(--border);
   padding: 7px 14px;
   border-radius: var(--radius-btn);
   font-family: var(--font-btn);
   font-size: var(--font-btn-size);
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   text-decoration: none;
-  box-shadow: 2px 2px 0 var(--border-2);
-  transition: all 0.1s;
+  transition: background 0.15s;
+}
+.btn-secondary:hover { background: var(--blue-dim); }
+
+/* Hello Kitty pill buttons */
+[data-theme="hello-kitty"] .btn-primary {
+  border-radius: 24px;
+  box-shadow: 0 3px 0 var(--btn-shadow);
+}
+[data-theme="hello-kitty"] .btn-secondary { border-radius: 20px; }
+
+/* Plain — square */
+[data-theme="plain"] .btn-primary {
+  border-radius: 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.btn-secondary:hover { background: var(--paper); }
-[data-theme="plain"] .btn-secondary { box-shadow: none; border-radius: 0; }
-[data-theme="readable"] .btn-secondary { box-shadow: none; border-radius: 6px; }
-[data-theme="dark"] .btn-secondary { box-shadow: none; }
-
-/* ── Highlighter utilities ────────────────────────────── */
+/* ── Highlighters ────────────────────────────────── */
 .hi-y { background: linear-gradient(transparent 55%, var(--hi-yellow) 55%); }
 .hi-p { background: linear-gradient(transparent 55%, var(--hi-pink) 55%); }
 .hi-b { background: linear-gradient(transparent 55%, var(--hi-blue) 55%); }
 
-/* ── Tape strip ───────────────────────────────────────── */
-.tape::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 14px;
-  background: var(--tape);
-  border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 1px;
-  opacity: 0.85;
-}
-[data-theme="dark"] .tape::before,
-[data-theme="plain"] .tape::before,
-[data-theme="readable"] .tape::before { display: none; }
-
-/* ── Scrollbar ────────────────────────────────────────── */
+/* ── Scrollbar ───────────────────────────────────── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--paper-2); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue); }
 
-/* ── Animations ──────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes paperIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.fade-up  { animation: fadeUp 0.35s ease-out both; }
-.paper-in { animation: paperIn 0.4s ease-out both; }
+.fade-up       { animation: fadeUp 0.3s ease-out both; }
+.animate-spin  { animation: spin 1s linear infinite; }
 
 *:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-/* ── Mobile responsiveness ────────────────────────────── */
-@media (max-width: 640px) {
-  body {
-    font-size: 14px;
-  }
-
-  /* Dashboard layout main padding */
-  main {
-    padding: 16px 12px !important;
-  }
-
-  /* Top bar adjustments */
-  header {
-    padding: 0 12px !important;
-    height: auto !important;
-    min-height: 48px;
-    flex-wrap: wrap;
-  }
-
-  /* Hide user name on very small screens, keep avatar only */
-  .user-name-text {
-    display: none;
-  }
-
-  /* Tabs scrollable horizontally */
-  .dashboard-tabs {
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 8px;
-  }
-
-  /* Grid columns for reviewer cards */
-  .reviewer-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Stats cards */
-  .stats-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  /* Buttons full width on mobile if needed */
-  .btn-primary,
-  .btn-secondary {
-    white-space: nowrap;
-  }
-
-  /* Dropzone padding */
-  .upload-dropzone {
-    padding: 24px 12px !important;
-  }
-}

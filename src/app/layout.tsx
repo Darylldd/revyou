@@ -25,16 +25,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             {children}
             <Toaster
-              position="bottom-right"
+              position="top-right"
               toastOptions={{
                 style: {
                   background: "var(--card)",
                   color: "var(--ink)",
                   border: "1px solid var(--border)",
                   fontSize: "13px",
-                  borderRadius: "4px",
-                  boxShadow: "2px 3px 0 var(--border-2)",
+                  borderRadius: "10px",
                 },
+                success: { iconTheme: { primary: "#7c3aed", secondary: "var(--card)" } },
+                error:   { iconTheme: { primary: "#ef4444",  secondary: "var(--card)" } },
               }}
             />
           </AuthProvider>

@@ -92,11 +92,11 @@ export default function ScoreSummary({ result, reviewerTitle, onRestart, user }:
 
         {/* Sticky note — margin annotation style */}
         <div style={{
-          background: "#fef9c3", border: "1px solid #f0e060", borderRadius: 2,
+          background: "#81359a", border: "1px solid #e460f0", borderRadius: 2,
           padding: "14px 16px", transform: "rotate(0.4deg)",
-          boxShadow: "2px 3px 0 #e6d640",
+          boxShadow: "2px 3px 0 #ba40e6",
         }}>
-          <p className="hand" style={{ fontSize: 15, color: "var(--ink-2)" }}>
+          <p className="hand" style={{ fontSize: 15, color: "var(--ink-1)" }}>
             {pct >= 90 ? "Perfect score! Well earned break."
   : pct >= 75 ? "Almost perfect. Review the ones you missed."
   : pct >= 60 ? "Decent start. One more round will lock it in."

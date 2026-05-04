@@ -49,7 +49,6 @@ function ReviewContent() {
   const [loadingReviewer, setLoadingReviewer] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
 
-  // Load reviewer from Firestore if reviewerId is in URL
   useEffect(() => {
     if (!reviewerId) return;
     setLoadingReviewer(true);

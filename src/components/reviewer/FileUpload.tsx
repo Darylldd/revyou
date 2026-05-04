@@ -28,7 +28,6 @@ export default function FileUpload({
   const { user } = useAuth();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
-  // ✅ FIX: derive uploading state
   const uploading = uploadedFiles.some(
     (f) => f.status === "uploading" || f.status === "extracting"
   );
@@ -169,7 +168,7 @@ export default function FileUpload({
     onDrop: handleFiles,
     multiple: true,
     maxSize: 10 * 1024 * 1024,
-    disabled: uploading, // ✅ prevents interaction while uploading
+    disabled: uploading, 
   });
 
   const removeFile = (index: number) => {
