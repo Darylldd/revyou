@@ -78,7 +78,7 @@ export default function ThemeSwitch() {
                 flexShrink: 0,
               }} />
               <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: theme === t.id ? 600 : 400 }}>
-                {t.emoji} {t.label}
+                 {t.label}
               </span>
             </button>
           ))}
