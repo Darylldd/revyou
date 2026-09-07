@@ -68,30 +68,135 @@ export default function SessionConfig({ preloadedText, preloadedTitle, onStart, 
       }))).catch(console.error).finally(() => setLoadingFiles(false));
   }, [tab, user, savedFiles.length]);
 
-  const handleDrop = useCallback(async (files: File[]) => {
+const handleDrop = useCallback(
+  async (files: File[]) => {
     const file = files[0];
+
     if (!file) return;
-    if (!isSupportedFile(file.name)) { toast.error("Unsupported file type."); return; }
-    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB."); return; }
-    setUploading(true); setUploadMsg("uploading...");
+
+    if (!isSupportedFile(file.name)) {
+      toast.error("Unsupported file type.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Max 10MB.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadMsg("uploading...");
+
     try {
-      const fd = new FormData(); fd.append("file", file);
-      const up = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!up.ok) throw new Error("Upload failed");
-      const { url } = await up.json();
-      setUploadMsg("extracting text...");
-      const ex = await fetch("/api/extract", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, fileType: getFileExtension(file.name), fileName: file.name }),
-      });
-      if (!ex.ok) { const e = await ex.json(); throw new Error(e.error ?? "Failed"); }
-      const { extractedText } = await ex.json();
-      setText(extractedText); setFileName(file.name); setSelectedId(null);
-      toast.success("File processed!");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed.");
-    } finally { setUploading(false); setUploadMsg(""); }
-  }, []);
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const up = await fetch(
+        "/api/upload",
+        {
+          method: "POST",
+          body: fd,
+        }
+      );
+
+      const uploadData =
+        await up.json();
+
+      if (!up.ok) {
+        throw new Error(
+          uploadData.error ??
+            "Upload failed."
+        );
+      }
+
+      const {
+        url,
+      } = uploadData;
+
+      if (!url) {
+        throw new Error(
+          "Upload completed but no download URL was created."
+        );
+      }
+
+      setUploadMsg(
+        "extracting text..."
+      );
+
+      const ex = await fetch(
+        "/api/extract",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            url,
+            fileType:
+              getFileExtension(
+                file.name
+              ),
+            fileName:
+              file.name,
+          }),
+        }
+      );
+
+      const extractData =
+        await ex.json();
+
+      if (!ex.ok) {
+        throw new Error(
+          extractData.error ??
+            "Failed to extract file content."
+        );
+      }
+
+      const extractedText =
+        extractData.extractedText;
+
+      if (
+        !extractedText ||
+        extractedText.trim()
+          .length < 5
+      ) {
+        throw new Error(
+          "Could not extract useful content from this file."
+        );
+      }
+
+      setText(
+        extractedText
+      );
+
+      setFileName(
+        file.name
+      );
+
+      setSelectedId(null);
+
+      toast.success(
+        "File processed!"
+      );
+    } catch (error) {
+      console.error(
+        "File processing error:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to process file."
+      );
+    } finally {
+      setUploading(false);
+      setUploadMsg("");
+    }
+  },
+  []
+);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleDrop, multiple: false, disabled: uploading || generating,

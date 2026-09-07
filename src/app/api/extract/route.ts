@@ -1,225 +1,528 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { url, fileType, fileName } = await req.json();
-    if (!url) return NextResponse.json({ error: "No URL provided" }, { status: 400 });
+    const {
+      url,
+      fileType,
+      fileName,
+    } = await req.json();
+
+    if (!url) {
+      return NextResponse.json(
+        { error: "No file URL provided." },
+        { status: 400 }
+      );
+    }
 
     const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
+
+    if (!response.ok) {
+      const cloudinaryError =
+        response.headers.get("x-cld-error");
+
+      console.error(
+        "Cloudinary download failed:",
+        response.status,
+        cloudinaryError
+      );
+
+      throw new Error(
+        `Could not download uploaded file. HTTP ${response.status}.`
+      );
+    }
+
+    const arrayBuffer =
+      await response.arrayBuffer();
+
     const buffer = Buffer.from(arrayBuffer);
-    const ext = fileName?.split(".").pop()?.toLowerCase() ?? fileType;
+
+    const ext =
+      fileName
+        ?.split(".")
+        .pop()
+        ?.toLowerCase() ||
+      fileType?.toLowerCase() ||
+      "";
 
     let extractedText = "";
 
-    if (["txt", "md"].includes(ext)) {
-      extractedText = buffer.toString("utf-8");
+    if (
+      ["txt", "md", "csv"].includes(ext)
+    ) {
+      extractedText =
+        buffer.toString("utf-8");
     } else if (ext === "pdf") {
-      extractedText = await extractPdf(buffer);
-    } else if (["docx", "doc", "pptx", "xlsx", "xlsm", "odt", "odp", "ods"].includes(ext)) {
-      extractedText = await extractOffice(buffer, ext);
-    } else if (["heic", "heif"].includes(ext)) {
-      extractedText = await extractHeic(buffer);
-    } else if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
-      extractedText = await extractImage(buffer, ext);
+      extractedText =
+        await extractPdf(buffer);
+    } else if (
+      [
+        "docx",
+        "doc",
+        "pptx",
+        "xlsx",
+        "xls",
+        "xlsm",
+        "odt",
+        "odp",
+        "ods",
+      ].includes(ext)
+    ) {
+      extractedText =
+        await extractOffice(buffer, ext);
+    } else if (
+      ["heic", "heif"].includes(ext)
+    ) {
+      extractedText =
+        await extractHeic(buffer);
+    } else if (
+      [
+        "png",
+        "jpg",
+        "jpeg",
+        "webp",
+        "gif",
+      ].includes(ext)
+    ) {
+      extractedText =
+        await extractImage(buffer, ext);
     } else {
-      return NextResponse.json({ error: `Unsupported file type: .${ext}` }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `Unsupported file type: .${ext}`,
+        },
+        { status: 400 }
+      );
     }
 
-    const cleaned = extractedText.trim();
-    if (!cleaned || cleaned.length < 5) {
-      return NextResponse.json({ error: "Could not extract content from this file." }, { status: 400 });
+    const cleaned =
+      extractedText.trim();
+
+    if (
+      !cleaned ||
+      cleaned.length < 5
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Could not extract useful content from this file.",
+        },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ extractedText: cleaned });
+    return NextResponse.json({
+      extractedText: cleaned,
+    });
   } catch (error) {
-    console.error("Extraction error:", error);
-    const msg = error instanceof Error ? error.message : "Extraction failed.";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error(
+      "Extraction error:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Extraction failed.",
+      },
+      { status: 500 }
+    );
   }
 }
 
-// ── PDF via unpdf ─────────────────────────────────────────────────
-async function extractPdf(buffer: Buffer): Promise<string> {
+async function extractPdf(
+  buffer: Buffer
+): Promise<string> {
   try {
-    const { extractText } = await import("unpdf");
-    const uint8 = new Uint8Array(buffer);
-    const { text } = await extractText(uint8, { mergePages: true });
-    const cleaned = (text ?? "").trim();
-    if (!cleaned || cleaned.length < 20) {
-      throw new Error("This PDF appears to be scanned/image-based. Upload the pages as JPG/PNG instead, or use a text-based PDF.");
+    const { extractText } =
+      await import("unpdf");
+
+    const uint8 =
+      new Uint8Array(buffer);
+
+    const { text } =
+      await extractText(uint8, {
+        mergePages: true,
+      });
+
+    const cleaned =
+      (text ?? "").trim();
+
+    if (
+      !cleaned ||
+      cleaned.length < 20
+    ) {
+      throw new Error(
+        "This PDF appears to be scanned or image-based. Upload the pages as JPG or PNG instead, or use a text-based PDF."
+      );
     }
+
     return cleaned;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    if (msg.includes("scanned") || msg.includes("image-based")) throw err;
-    throw new Error("Failed to read PDF. Make sure it is a valid, non-password-protected, text-based PDF.");
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "";
+
+    if (
+      message.includes("scanned") ||
+      message.includes("image-based")
+    ) {
+      throw error;
+    }
+
+    throw new Error(
+      "Failed to read PDF. Make sure it is a valid, non-password-protected, text-based PDF."
+    );
   }
 }
 
-// ── Office files: DOCX, DOC, PPTX, XLSX, XLSM via officeparser ──
-async function extractOffice(buffer: Buffer, ext: string): Promise<string> {
-  // XLSX/XLSM — use SheetJS for richer output
-  if (["xlsx", "xlsm"].includes(ext)) {
+async function extractOffice(
+  buffer: Buffer,
+  ext: string
+): Promise<string> {
+  if (
+    ["xlsx", "xls", "xlsm"].includes(ext)
+  ) {
     return extractExcel(buffer);
   }
 
-  // DOC — try mammoth first (better for .doc), fallback to officeparser
   if (ext === "doc") {
     try {
-      const mammoth = await import("mammoth");
-      const result = await mammoth.extractRawText({ buffer });
-      const text = result.value?.trim() ?? "";
-      if (text.length > 20) return text;
-    } catch { /* fallthrough */ }
+      const mammoth =
+        await import("mammoth");
+
+      const result =
+        await mammoth.extractRawText({
+          buffer,
+        });
+
+      const text =
+        result.value?.trim() ?? "";
+
+      if (text.length > 20) {
+        return text;
+      }
+    } catch {
+      // Continue to officeparser.
+    }
   }
 
-  // DOCX, PPTX, DOC (fallback), ODT, ODP, ODS — officeparser
   try {
-    const officeparser = await import("officeparser");
-    const parseOffice = (officeparser as any).parseOffice ?? (officeparser as any).parseOfficeAsync;
-    const text: string = await new Promise((resolve, reject) => {
-      const options = {
-        outputErrorToConsole: false,
-        newlineDelimiter: "\n",
-        ignoreNotes: false,
-      };
-      const callback = (err: any, data: string) => {
-        if (err) return reject(err);
-        resolve(data);
-      };
-      const result = parseOffice(buffer, options, callback);
-      if (result && typeof result.then === "function") {
-        result.then(resolve).catch(reject);
-      } else if (result !== undefined) {
-        resolve(result);
-      }
-    });
-    const cleaned = (text ?? "").trim();
-    if (!cleaned || cleaned.length < 5) {
-      throw new Error(`Could not extract text from this ${ext.toUpperCase()} file. Make sure it contains actual text content.`);
+    const officeparser =
+      await import("officeparser");
+
+    const parser =
+      (officeparser as any)
+        .parseOffice ??
+      (officeparser as any)
+        .parseOfficeAsync;
+
+    if (
+      typeof parser !== "function"
+    ) {
+      throw new Error(
+        "Office parser is not available."
+      );
     }
+
+    const text =
+      await new Promise<string>(
+        (resolve, reject) => {
+          const options = {
+            outputErrorToConsole:
+              false,
+            newlineDelimiter: "\n",
+            ignoreNotes: false,
+          };
+
+          const callback = (
+            error: any,
+            data: string
+          ) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            resolve(data || "");
+          };
+
+          try {
+            const result =
+              parser(
+                buffer,
+                options,
+                callback
+              );
+
+            if (
+              result &&
+              typeof result.then ===
+                "function"
+            ) {
+              result
+                .then(
+                  (value: string) =>
+                    resolve(
+                      value || ""
+                    )
+                )
+                .catch(reject);
+            } else if (
+              result !==
+                undefined &&
+              result !== null
+            ) {
+              resolve(
+                String(result)
+              );
+            }
+          } catch (error) {
+            reject(error);
+          }
+        }
+      );
+
+    const cleaned =
+      text.trim();
+
+    if (
+      !cleaned ||
+      cleaned.length < 5
+    ) {
+      throw new Error(
+        `Could not extract text from this ${ext.toUpperCase()} file.`
+      );
+    }
+
     return cleaned;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    if (msg.includes("Could not extract")) throw err;
-    throw new Error(`Failed to read .${ext} file. Make sure it is a valid, uncorrupted file.`);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "";
+
+    if (
+      message.includes(
+        "Could not extract text"
+      )
+    ) {
+      throw error;
+    }
+
+    throw new Error(
+      `Failed to read .${ext} file. Make sure it is a valid, uncorrupted file.`
+    );
   }
 }
 
-// ── Excel/XLSM via SheetJS ────────────────────────────────────────
-async function extractExcel(buffer: Buffer): Promise<string> {
+async function extractExcel(
+  buffer: Buffer
+): Promise<string> {
   try {
-    const XLSX = await import("xlsx");
-    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const XLSX =
+      await import("xlsx");
+
+    const workbook =
+      XLSX.read(buffer, {
+        type: "buffer",
+      });
+
     const lines: string[] = [];
 
-    for (const sheetName of workbook.SheetNames) {
-      const sheet = workbook.Sheets[sheetName];
-      const csv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
-      const trimmed = csv.trim();
+    for (
+      const sheetName of
+        workbook.SheetNames
+    ) {
+      const sheet =
+        workbook.Sheets[
+          sheetName
+        ];
+
+      if (!sheet) continue;
+
+      const csv =
+        XLSX.utils.sheet_to_csv(
+          sheet,
+          {
+            blankrows: false,
+          }
+        );
+
+      const trimmed =
+        csv.trim();
+
       if (trimmed) {
-        lines.push(`=== Sheet: ${sheetName} ===`);
+        lines.push(
+          `=== Sheet: ${sheetName} ===`
+        );
+
         lines.push(trimmed);
       }
     }
 
-    const result = lines.join("\n\n").trim();
-    if (!result || result.length < 5) {
-      throw new Error("Spreadsheet appears to be empty or has no readable content.");
+    const result =
+      lines.join("\n\n").trim();
+
+    if (
+      !result ||
+      result.length < 5
+    ) {
+      throw new Error(
+        "Spreadsheet appears to be empty or has no readable content."
+      );
     }
+
     return result;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "";
-    if (msg.includes("empty")) throw err;
-    throw new Error("Failed to read spreadsheet. Make sure it is a valid .xlsx or .xlsm file.");
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "";
+
+    if (
+      message.includes(
+        "Spreadsheet appears"
+      )
+    ) {
+      throw error;
+    }
+
+    throw new Error(
+      "Failed to read spreadsheet. Make sure it is a valid Excel file."
+    );
   }
 }
 
-// ── HEIC/HEIF via sharp → JPEG → Groq Vision ─────────────────────
-async function extractHeic(buffer: Buffer): Promise<string> {
+async function extractHeic(
+  buffer: Buffer
+): Promise<string> {
   try {
-    const sharp = await import("sharp");
-    // Convert HEIC/HEIF to JPEG
-    const jpegBuffer = await sharp.default(buffer).jpeg({ quality: 90 }).toBuffer();
-    return extractImage(jpegBuffer, "jpg");
-  } catch (err) {
-    // If sharp fails (HEIC support varies), send raw to Groq Vision as fallback
-    console.error("Sharp HEIC conversion failed, trying direct:", err);
-    return extractImage(buffer, "jpg");
+    const sharp =
+      await import("sharp");
+
+    const jpegBuffer =
+      await sharp.default(buffer)
+        .jpeg({ quality: 90 })
+        .toBuffer();
+
+    return extractImage(
+      jpegBuffer,
+      "jpg"
+    );
+  } catch (error) {
+    console.error(
+      "HEIC conversion failed:",
+      error
+    );
+
+    return extractImage(
+      buffer,
+      "jpg"
+    );
   }
 }
 
-// ── Images via Groq Vision ────────────────────────────────────────
-async function extractImage(buffer: Buffer, ext: string): Promise<string> {
-  const mimeMap: Record<string, string> = {
-    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
-    webp: "image/webp", gif: "image/gif",
+async function extractImage(
+  buffer: Buffer,
+  ext: string
+): Promise<string> {
+  const mimeMap: Record<
+    string,
+    string
+  > = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+    gif: "image/gif",
   };
-  const mimeType = mimeMap[ext] ?? "image/jpeg";
-  const base64 = buffer.toString("base64");
-  const dataUrl = `data:${mimeType};base64,${base64}`;
 
-  const response = await groq.chat.completions.create({
-    model: "qwen/qwen3.6-27b",
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "image_url", image_url: { url: dataUrl } },
-          {
-            type: "text",
-            text: `You are a study material analyzer for a flashcard/quiz application.
+  const mimeType =
+    mimeMap[ext] ??
+    "image/jpeg";
 
-Extract ALL useful educational content from this image.
+  const base64 =
+    buffer.toString("base64");
 
-STEP 1 — identify the image type:
-- Text document (notes, textbook page, slides, test questions) → extract all text verbatim
-- Diagram/chart/figure (flowchart, graph, labeled diagram, table) → describe all labels and data
-- Photo/illustration with educational value (anatomy, science, geography) → describe in detail
-- Handwritten notes → transcribe as accurately as possible
+  const dataUrl =
+    `data:${mimeType};base64,${base64}`;
 
-STEP 2 — extract based on type:
+  const response =
+    await groq.chat.completions.create({
+      model:
+        "qwen/qwen3.6-27b",
 
-For TEXT:
-- Copy every word exactly
-- Preserve numbered lists, bullets, headings
-- For MCQ: keep format "1. Question\nA. Choice\nB. Choice\nC. Choice\nD. Choice"
-- For tables: row by row with | separators
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: dataUrl,
+              },
+            },
+            {
+              type: "text",
+              text: `You are a study material analyzer.
 
-For DIAGRAMS/CHARTS:
-- State diagram type and title
-- List all labeled parts and what they mean
-- Describe flows, hierarchies, relationships
-- Include all numbers, percentages, units
+Extract all useful educational content from this image.
 
-For PHOTOS/ILLUSTRATIONS:
-- Identify subject clearly
-- Describe all labeled parts
-- Explain the educational concept shown
-- Include any annotations
+If it contains text:
+- Transcribe the text accurately.
+- Preserve headings and lists.
+- Preserve numbered questions.
+- Preserve answer choices.
+- Preserve tables.
 
-RULES:
-- Be thorough — more detail = better flashcards
-- Never output "NO_TEXT_FOUND" unless image is completely blank or unrelated to any subject
-- If image has no text but has educational content, describe it in detail
-- No preamble like "Here is the content:" — just output directly`,
-          },
-        ],
-      },
-    ],
-    temperature: 0.05,
-    max_completion_tokens: 900,
-  });
+If it contains a diagram:
+- Identify the diagram.
+- Extract all labels.
+- Describe relationships and processes.
+- Include numbers, units, and important details.
 
-  const text = response.choices[0]?.message?.content ?? "";
-  if (!text || text.trim().length < 10) {
-    throw new Error("Image appears blank or contains no educational content.");
+If it contains handwritten notes:
+- Transcribe them accurately.
+
+If it contains educational illustrations:
+- Describe the important educational information shown.
+
+Do not say "NO_TEXT_FOUND" if the image contains educational information.
+
+Return only the extracted educational content.
+No preamble.`,
+            },
+          ],
+        },
+      ],
+
+      temperature: 0.05,
+      max_completion_tokens: 1200,
+    });
+
+  const text =
+    response.choices[0]
+      ?.message?.content ?? "";
+
+  if (
+    !text ||
+    text.trim().length < 10
+  ) {
+    throw new Error(
+      "Image appears blank or contains no educational content."
+    );
   }
+
   return text.trim();
 }
