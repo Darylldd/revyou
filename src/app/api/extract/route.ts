@@ -214,7 +214,7 @@ RULES:
       },
     ],
     temperature: 0.05,
-    max_tokens: 4000,
+    max_completion_tokens: 900,
   });
 
   const text = response.choices[0]?.message?.content ?? "";
