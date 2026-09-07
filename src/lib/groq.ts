@@ -2,7 +2,10 @@ import Groq from "groq-sdk";
 import type { Flashcard, MultipleChoiceQuestion, DifficultyLevel } from "@/types";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 const MODEL = "llama-3.3-70b-versatile";
+const VISION_MODEL = "qwen/qwen3.6-27b";
+
 
 const difficultyInstructions: Record<DifficultyLevel, string> = {
   easy: `- Simple recall questions about definitions and key terms
